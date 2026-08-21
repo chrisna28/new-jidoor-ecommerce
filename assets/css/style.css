@@ -1,0 +1,470 @@
+/* 
+   JiDoor Store — Mixtas Inspired Premium Style
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --bs-primary: #000000;
+    --bs-secondary: #ffffff;
+    --light-grey: #f5f5f5;
+    --dark-grey: #666666;
+}
+
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+
+body {
+    font-family: 'Jost', sans-serif;
+    background-color: #ffffff;
+    color: #000000;
+    overflow-x: hidden;
+}
+
+.ls-1 { letter-spacing: 1px; }
+.ls-2 { letter-spacing: 2px; }
+.fw-800 { font-weight: 800; }
+
+.object-fit-cover {
+    object-fit: cover;
+}
+
+/* ── NAVBAR ─────────────────────────────────────────── */
+.navbar {
+    transition: all 0.3s ease;
+    z-index: 1050;
+}
+
+.navbar-transparent {
+    background: transparent !important;
+    border: none !important;
+}
+
+.navbar-transparent .nav-link, 
+.navbar-transparent .navbar-brand,
+.navbar-transparent .text-dark {
+    color: #ffffff !important;
+    transition: all 0.3s ease;
+}
+
+/* Scrolled State */
+.navbar-scrolled {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05) !important;
+    padding-top: 0.8rem !important;
+    padding-bottom: 0.8rem !important;
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.navbar-scrolled .nav-link, 
+.navbar-scrolled .navbar-brand,
+.navbar-scrolled .text-dark {
+    color: #000000 !important;
+}
+
+.navbar-dark-text .nav-link, 
+.navbar-dark-text .navbar-brand,
+.navbar-dark-text .text-dark {
+    color: #000000 !important;
+}
+
+.navbar-light .nav-link:hover { color: var(--bs-primary); }
+
+/* ── HERO MIXTAS STYLE ────────────────────────────── */
+.hero-mixtas {
+    height: 100vh;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    position: relative;
+    color: #ffffff;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 10;
+}
+
+.hero-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.hero-title {
+    font-size: 4.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 40px;
+    max-width: 600px;
+}
+
+.btn-discovery {
+    background: #ffffff;
+    color: #000000;
+    padding: 15px 40px;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: all 0.3s;
+    border: none;
+}
+
+.btn-discovery:hover {
+    background: #000000;
+    color: #ffffff;
+}
+
+.hero-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    backdrop-filter: blur(5px);
+}
+
+.hero-nav-prev { left: 30px; }
+.hero-nav-next { right: 30px; }
+
+/* ── PRODUCT CARDS MIXTAS ──────────────────────────── */
+.product-card-mixtas {
+    border: none;
+    background: transparent;
+    margin-bottom: 40px;
+}
+
+.product-img-box {
+    background-color: var(--light-grey);
+    padding: 40px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1 / 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.product-img-box.rounded-0 {
+    padding: 0 !important;
+}
+
+.product-img-box img {
+    max-width: 90%;
+    height: auto;
+    transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.product-img-box.rounded-0 img {
+    max-width: 100%;
+}
+
+.product-card-mixtas:hover .product-img-box {
+    background-color: #ededed;
+}
+
+.product-card-mixtas:hover .product-img-box img {
+    transform: scale(1.1) translateY(-10px);
+}
+
+.product-cat {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #999;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.product-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #000;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.product-price {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.shop-filter-nav {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.shop-filter-link {
+    text-decoration: none;
+    color: #999;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.shop-filter-link.active {
+    color: #000;
+    border-bottom: 2px solid #000;
+    padding-bottom: 5px;
+}
+
+/* ── AUTH PAGES ────────────────────────────────────── */
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+}
+
+.auth-image {
+    width: 50%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px;
+    color: #fff;
+}
+
+.auth-form-container {
+    width: 50%;
+    display: flex;
+    align-items: center;
+    padding: 100px;
+}
+
+@media (max-width: 992px) {
+    .auth-image { display: none; }
+    .auth-form-container { width: 100%; padding: 40px; }
+}
+
+.form-control-mixtas {
+    border: none;
+    border-bottom: 1px solid #ddd;
+    border-radius: 0;
+    padding: 15px 0;
+    font-size: 0.9rem;
+}
+
+.form-control-mixtas:focus {
+    box-shadow: none;
+    border-color: #000;
+}
+/* ── SEARCH INPUT MIXTAS ─────────────────────────── */
+.search-input-mixtas {
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    padding: 8px 35px 8px 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    background: transparent !important;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    width: 140px;
+    outline: none;
+    color: #000;
+    text-transform: uppercase;
+    box-shadow: none !important;
+}
+
+.search-input-mixtas:focus {
+    width: 200px;
+    border-bottom-color: #000;
+}
+
+.search-input-mixtas::placeholder {
+    color: #bbb;
+    font-weight: 600;
+}
+
+@media (max-width: 991px) {
+    .search-input-mixtas {
+        width: 100px;
+    }
+    .search-input-mixtas:focus {
+        width: 140px;
+    }
+}
+
+/* ── PRODUCT BADGES ──────────────────────────────── */
+.product-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #000;
+    color: #fff;
+    padding: 5px 12px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    z-index: 5;
+}
+
+.opacity-10 {
+    opacity: 0.1;
+}
+
+/* ── JIDOOR PREMIUM CARD ──────────────────────────── */
+.jidoor-card {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    height: 100%;
+    box-shadow: none;
+}
+
+.jidoor-card:hover {
+    transform: none;
+    box-shadow: none;
+    border: none;
+}
+
+.jidoor-card .card-img-container {
+    background: #f5f5f5;
+    aspect-ratio: 3/4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.jidoor-card .card-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.jidoor-card:hover .card-img-container img {
+    transform: scale(1.05);
+}
+
+.jidoor-card .card-body {
+    padding: 15px 0 0 0 !important;
+}
+
+.jidoor-card .product-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 2px;
+    height: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.jidoor-card .product-cat {
+    font-size: 0.75rem;
+    color: #999;
+    margin-bottom: 6px;
+    text-transform: capitalize;
+    display: block;
+}
+
+.jidoor-card .product-price {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #000;
+}
+
+/* ── STAR RATING SYSTEM ───────────────────────────── */
+.star-rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    color: #444;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.star-rating input:checked ~ label {
+    color: #ffc107;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: #ffc107;
+}
+
+.cursor-pointer {
+    cursor: pointer !important;
+}
+
+/* ── WISHLIST BUTTON OVERLAY ──────────────────────── */
+.wishlist-btn-overlay {
+    position: absolute !important;
+    bottom: 15px !important;
+    right: 15px !important;
+    top: auto !important;
+    background: #ffffff !important;
+    border: none !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    opacity: 1 !important;
+    transform: none !important;
+    color: #000 !important;
+    padding: 0 !important;
+    outline: none !important;
+}
+
+.wishlist-btn-overlay:hover {
+    background: #f0f0f0 !important;
+    transform: scale(1.1) !important;
+}
+
+.wishlist-btn-overlay i {
+    font-size: 13px !important;
+}
+
+.wishlist-btn-overlay i.text-danger {
+    color: #000 !important;
+}
+

@@ -1,0 +1,318 @@
+/* 
+   JiDoor Admin — Modern Dark Dashboard
+   High-end SaaS style
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --admin-bg: #0b0e14;
+    --admin-sidebar: #11141d;
+    --admin-card: #161b22;
+    --admin-border: #30363d;
+    --admin-text: #ffffff;
+    --admin-accent: #f97316;
+    --admin-accent-soft: rgba(249, 115, 22, 0.2);
+    --admin-muted: #abb2bf;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--admin-bg);
+    color: var(--admin-text);
+    overflow-x: hidden;
+}
+
+/* Force all headings and labels to be bright white */
+h1, h2, h3, h4, h5, h6, label, .form-label, .modal-title, .admin-card-title, .stat-value {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+/* Fix for subtitles and small muted text - make them much lighter and clearer */
+.text-muted, .small, .stat-label, .dropdown-header, .sidebar-nav span {
+    color: #e2e8f0 !important; /* Very light gray/blue */
+    opacity: 1 !important;
+    font-weight: 500 !important;
+}
+
+/* ── SIDEBAR ────────────────────────────────────────── */
+.admin-sidebar {
+    width: 280px;
+    height: 100vh;
+    background-color: var(--admin-sidebar);
+    position: fixed;
+    top: 0; left: 0;
+    border-right: 1px solid var(--admin-border);
+    z-index: 1000;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff !important;
+    margin-bottom: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none !important;
+    flex-shrink: 0;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 4px;
+}
+
+.sidebar-logout-wrapper {
+    margin-top: auto;
+}
+
+.nav-item-admin {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    color: #94a3b8;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.nav-item-admin:hover {
+    background-color: rgba(255,255,255,0.05);
+    color: #fff;
+}
+
+.nav-item-admin.active {
+    background-color: var(--admin-accent);
+    color: #fff !important;
+}
+
+/* ── MAIN CONTENT ───────────────────────────────────── */
+.admin-main {
+    margin-left: 280px;
+    padding: 2.5rem 3.5rem;
+    min-height: 100vh;
+}
+
+.admin-card {
+    background-color: rgba(22, 27, 34, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── TABLES (COMPLETE RESET) ─────────────────────────── */
+.table-responsive {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.table-admin {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: #ffffff !important;
+    --bs-table-border-color: var(--admin-border) !important;
+    --bs-table-striped-bg: transparent !important;
+    --bs-table-active-bg: transparent !important;
+    --bs-table-hover-bg: rgba(255,255,255,0.03) !important;
+    
+    width: 100%;
+    margin-bottom: 0;
+    color: #ffffff !important;
+    background-color: transparent !important;
+    border-collapse: separate;
+}
+
+.table-admin tr, .table-admin td, .table-admin th {
+    background-color: transparent !important;
+    color: #ffffff !important;
+    border-color: var(--admin-border) !important;
+}
+
+.table-admin thead th {
+    background-color: #1c2128 !important;
+    color: #ffffff !important;
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 20px;
+    border-bottom: 2px solid var(--admin-border) !important;
+}
+
+.table-admin tbody tr {
+    background-color: transparent !important;
+}
+
+.table-admin tbody td {
+    background-color: transparent !important;
+    padding: 22px 20px;
+    border-bottom: 1px solid var(--admin-border) !important;
+    color: #ffffff !important;
+    vertical-align: middle;
+}
+
+/* ── FORMS ──────────────────────────────────────────── */
+.form-control-admin, .form-select-admin {
+    background-color: #0d1117 !important;
+    border: 1px solid var(--admin-border) !important;
+    color: #ffffff !important;
+    border-radius: 12px;
+    padding: 14px 18px;
+    outline: none;
+    width: 100%;
+}
+
+.form-control-admin:focus {
+    border-color: var(--admin-accent) !important;
+    box-shadow: 0 0 0 4px var(--admin-accent-soft) !important;
+}
+
+.form-control-admin::placeholder {
+    color: #4b5563 !important;
+}
+
+/* ── STATS ──────────────────────────────────────────── */
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.stat-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    position: relative;
+}
+
+.stat-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    opacity: 0.2;
+    background: currentColor;
+    filter: blur(15px);
+}
+
+.glow-text {
+    text-shadow: 0 0 15px currentColor;
+}
+
+.ai-pulse {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+    0% { transform: scale(0.95); opacity: 0.5; }
+    50% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(0.95); opacity: 0.5; }
+}
+
+.ai-float {
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+/* ── BUTTONS ────────────────────────────────────────── */
+.btn-admin-primary {
+    background-color: var(--admin-accent) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 800;
+    padding: 14px 32px;
+    border-radius: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-admin-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px var(--admin-accent-soft);
+    background-color: #ff8533 !important;
+}
+
+.btn-admin-outline {
+    background-color: transparent !important;
+    border: 1.5px solid var(--admin-border) !important;
+    color: #fff !important;
+    font-weight: 700;
+    padding: 12px 28px;
+    border-radius: 12px;
+}
+
+.btn-admin-outline:hover {
+    background-color: #fff !important;
+    color: #000 !important;
+}
+
+/* ── BADGES ─────────────────────────────────────────── */
+.admin-badge {
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 992px) {
+    .admin-sidebar { width: 90px; padding: 2rem 1rem; }
+    .sidebar-logo span, .nav-item-admin span { display: none; }
+    .admin-main { margin-left: 90px; padding: 2rem 1.5rem; }
+}
+/* ── PAGINATION ─────────────────────────────────────── */
+.pagination .page-link {
+    background-color: #1c2128 !important;
+    border: 1px solid var(--admin-border) !important;
+    color: #ffffff !important;
+    padding: 10px 16px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.pagination .page-link:hover {
+    background-color: #30363d !important;
+    color: var(--admin-accent) !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--admin-accent) !important;
+    border-color: var(--admin-accent) !important;
+    color: #fff !important;
+}
+
+.pagination .page-item.disabled .page-link {
+    background-color: #0d1117 !important;
+    opacity: 0.5;
+    color: #4b5563 !important;
+}
