@@ -1,11 +1,9 @@
-<div class="d-flex justify-content-between align-items-center mb-5">
-    <div>
-        <h2 class="fw-bold text-white mb-1">Manajemen Pengguna</h2>
-        <p class="text-muted small mb-0">Kelola akses dan data pengguna terdaftar.</p>
-    </div>
+<div class="page-head">
+    <h2 class="page-title">Manajemen Pengguna</h2>
+    <p class="page-sub">Kelola akses dan data pengguna terdaftar.</p>
 </div>
 
-<div class="admin-card p-0 overflow-hidden">
+<div class="admin-card p-0">
     <div class="table-responsive">
         <table class="table table-admin mb-0">
             <thead>
@@ -21,33 +19,37 @@
                 <?php if (!empty($users)): foreach ($users as $u): ?>
                 <tr>
                     <td class="ps-4">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; background: linear-gradient(135deg, <?= $u->role === 'admin' ? '#f97316, #fb923c' : '#3b82f6, #60a5fa' ?>); font-size: 0.8rem;">
-                                <?= strtoupper(substr($u->username, 0, 1)) ?>
-                            </div>
-                            <div class="fw-bold text-white small"><?= htmlspecialchars($u->username) ?></div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="avatar-circle <?= $u->role === 'admin' ? '' : 'avatar-customer' ?> avatar-sm"><?= strtoupper(substr($u->username, 0, 1)) ?></span>
+                            <span class="fw-bold small"><?= htmlspecialchars($u->username) ?></span>
                         </div>
                     </td>
                     <td class="small text-muted"><?= htmlspecialchars($u->email) ?></td>
-                    <td class="small text-muted"><?= $u->phone ?: '-' ?></td>
+                    <td class="small text-muted num"><?= $u->phone ?: '-' ?></td>
                     <td>
                         <?php if ($u->role === 'admin'): ?>
-                            <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-3 fw-bold" style="font-size: 0.65rem;">ADMINISTRATOR</span>
+                            <span class="badge-role-admin">ADMIN</span>
                         <?php else: ?>
-                            <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-3 fw-bold" style="font-size: 0.65rem;">CUSTOMER</span>
+                            <span class="badge-role-customer">CUSTOMER</span>
                         <?php endif ?>
                     </td>
                     <td class="small text-muted"><?= date('d M Y', strtotime($u->created_at)) ?></td>
                 </tr>
                 <?php endforeach; else: ?>
-                <tr><td colspan="5" class="text-center text-muted py-5">Belum ada pengguna.</td></tr>
+                <tr><td colspan="5">
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-users"></i></div>
+                        <h6>Belum ada pengguna</h6>
+                        <p>Pengguna terdaftar akan tampil di sini.</p>
+                    </div>
+                </td></tr>
                 <?php endif ?>
             </tbody>
         </table>
     </div>
     
     <?php if(!empty($pagination)): ?>
-    <div class="mt-4 pb-2">
+    <div class="mt-4 pb-4 px-4">
         <?= $pagination ?>
     </div>
     <?php endif; ?>

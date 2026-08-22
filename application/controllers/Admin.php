@@ -34,7 +34,9 @@ class Admin extends CI_Controller {
             'top_selling'    => $this->M_order->get_top_selling_products(5),
             'category_dist'  => $this->M_product->get_category_distribution(),
             'revenue_chart'  => $this->M_order->get_revenue_by_month(),
-            'low_stock'      => $this->M_product->get_low_stock(5),
+            'low_variants'   => $this->M_product->get_low_stock_variants(5),
+            'low_simple'     => $this->M_product->get_low_stock_simple(5),
+            'unread_chat'    => $this->M_chat->count_unread_admin(),
             'active_tab'     => 'dashboard',
         ];
         $this->load->view('admin/v_header', $data);
@@ -170,8 +172,8 @@ class Admin extends CI_Controller {
                 'stock'       => $this->input->post('stock'),
                 'image'       => $image,
                 'is_custom'   => $this->input->post('is_custom') ? 1 : 0,
-                'variant_name1' => $this->_variant_name('variant_name1', 'Warna'),
-                'variant_name2' => $this->_variant_name('variant_name2', 'Ukuran'),
+                'variant_name1' => $this->_variant_name('variant_name1'),
+                'variant_name2' => $this->_variant_name('variant_name2'),
             ]);
 
             // Simpan varian warna/ukuran (Revisi #2)
@@ -221,8 +223,8 @@ class Admin extends CI_Controller {
                 'price'       => $this->input->post('price'),
                 'stock'       => $this->input->post('stock'),
                 'is_custom'   => $this->input->post('is_custom') ? 1 : 0,
-                'variant_name1' => $this->_variant_name('variant_name1', 'Warna'),
-                'variant_name2' => $this->_variant_name('variant_name2', 'Ukuran'),
+                'variant_name1' => $this->_variant_name('variant_name1'),
+                'variant_name2' => $this->_variant_name('variant_name2'),
             ];
 
             if (!empty($_FILES['image']['name'])) {
@@ -230,6 +232,10 @@ class Admin extends CI_Controller {
                 $this->load->library('upload', $config);
                 if ($this->upload->do_upload('image')) {
                     $data_update['image'] = $this->upload->data()['file_name'];
+                } else {
+                    // Sama seperti tambah: jangan diam-diam abaikan kegagalan upload
+                    $this->session->set_flashdata('error', $this->upload->display_errors('', ''));
+                    redirect('admin/produk/edit/' . $id);
                 }
             }
 
@@ -255,9 +261,9 @@ class Admin extends CI_Controller {
     /**
      * Nama variasi ala Shopee — fallback ke default bila kosong (maks 50 char)
      */
-    private function _variant_name($field, $default) {
-        $name = trim($this->input->post($field, TRUE));
-        return ($name === '') ? $default : mb_substr($name, 0, 50);
+    private function _variant_name($field) {
+        $name = trim((string) $this->input->post($field, TRUE));
+        return mb_substr($name, 0, 50);
     }
 
     public function produk_hapus($id) {
@@ -340,6 +346,9 @@ class Admin extends CI_Controller {
      * Verifikasi / Tolak Pembayaran / Update status + tracking (Revisi #5)
      */
     public function verify_payment($order_id) {
+        $order = $this->M_order->get_order_detail($order_id);
+        if (!$order) { redirect('admin/pesanan'); }
+
         $status    = $this->input->post('status');
         $keterangan = $this->input->post('keterangan', TRUE);
         $resi      = $this->input->post('resi', TRUE);
@@ -354,6 +363,13 @@ class Admin extends CI_Controller {
         if ($status === 'shipped' && (empty($resi) || empty($courier))) {
             $this->session->set_flashdata('error', 'Nomor resi dan nama kurir wajib diisi saat mengirim barang.');
             redirect('admin/pesanan/detail/' . $order_id);
+        }
+
+        // Kembalikan stok saat pesanan ditolak/dibatalkan
+        // (hanya pada transisi pertama, agar tidak dobel jika aksi diulang)
+        $void_statuses = ['rejected', 'cancelled'];
+        if (in_array($status, $void_statuses) && !in_array($order->status, $void_statuses)) {
+            $this->M_order->restore_order_stock($order_id);
         }
 
         $label = [
@@ -376,10 +392,11 @@ class Admin extends CI_Controller {
         $data = [
             'title'      => 'Chat Pelanggan',
             'inbox'      => $this->M_chat->get_inbox(),
+            'conv'       => null,
             'active_tab' => 'chat',
         ];
         $this->load->view('admin/v_header', $data);
-        $this->load->view('admin/v_chat_inbox', $data);
+        $this->load->view('admin/v_chat', $data);
         $this->load->view('admin/v_footer', $data);
     }
 
@@ -390,13 +407,14 @@ class Admin extends CI_Controller {
 
         $data = [
             'title'   => 'Chat: ' . ($conv->username ?: 'User #' . $conv->user_id),
+            'inbox'   => $this->M_chat->get_inbox(),
             'conv'    => $conv,
             'history' => $this->M_chat->get_history($conversation_id),
             'chat_products' => $this->M_product->get_chat_list(),
             'active_tab' => 'chat',
         ];
         $this->load->view('admin/v_header', $data);
-        $this->load->view('admin/v_chat_thread', $data);
+        $this->load->view('admin/v_chat', $data);
         $this->load->view('admin/v_footer', $data);
     }
 
@@ -469,11 +487,17 @@ class Admin extends CI_Controller {
     }
 
     public function kategori_update() {
-        $id = $this->input->post('id');
+        $id   = $this->input->post('id');
+        $name = $this->input->post('name', TRUE);
         $this->form_validation->set_rules('name', 'Nama Kategori', 'required');
 
         if ($this->form_validation->run() !== FALSE) {
-            $name = $this->input->post('name', TRUE);
+            // Cegah duplikat nama kategori (kecuali milik kategori ini sendiri)
+            $dup = $this->db->where('name', $name)->where('id !=', (int)$id)->count_all_results('categories');
+            if ($dup) {
+                $this->session->set_flashdata('error', 'Nama kategori sudah dipakai.');
+                redirect('admin/kategori');
+            }
             $this->M_product->update_category($id, [
                 'name' => $name,
                 'slug' => strtolower(url_title($name))
@@ -486,6 +510,13 @@ class Admin extends CI_Controller {
     }
 
     public function kategori_hapus($id) {
+        // Blokir penghapusan bila masih ada produk di dalamnya
+        // (mencegah produk yatim yang hilang dari halaman kategori)
+        $used = $this->db->where('category_id', (int)$id)->count_all_results('products');
+        if ($used) {
+            $this->session->set_flashdata('error', "Kategori tidak dapat dihapus karena masih dimiliki {$used} produk.");
+            redirect('admin/kategori');
+        }
         $this->M_product->delete_category($id);
         $this->session->set_flashdata('success', 'Kategori berhasil dihapus.');
         redirect('admin/kategori');

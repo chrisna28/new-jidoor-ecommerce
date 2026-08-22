@@ -1,93 +1,82 @@
+<?php if (!$this->session->userdata('user_id') || $this->session->userdata('role') !== 'admin') { redirect('auth'); } ?>
+
+<?php
+$ci =& get_instance();
+$ci->load->model('M_chat');
+$unread_chat = $ci->M_chat->count_unread_admin();
+$username = $this->session->userdata('username');
+$page_title = isset($title) ? $title : 'Dashboard';
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard — JiDoor Store</title>
-    
-    <!-- Bootstrap 5.3 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <!-- Admin Style -->
-    <link rel="stylesheet" href="<?= base_url('assets/css/admin.css?v=1.3') ?>">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title><?= $page_title ?> - JiDoor Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin.css?v=2.8') ?>">
 </head>
 <body>
 
-<!-- Sidebar -->
-<aside class="admin-sidebar">
-    <a href="<?= base_url('admin') ?>" class="sidebar-logo text-decoration-none">
-        <i class="fas fa-door-open text-warning"></i>
-        <span>JiDoor Admin</span>
+<!-- ===== SIDEBAR ===== -->
+<aside class="admin-sidebar" id="adminSidebar">
+    <a class="sidebar-logo" href="<?= site_url('admin') ?>">
+        <i class="fa-solid fa-door-open"></i> JiDoor
     </a>
-
     <nav class="sidebar-nav">
-        <a href="<?= base_url('admin') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'dashboard' ? 'active' : '' ?>">
-            <i class="fas fa-th-large"></i>
-            <span>Dashboard</span>
-        </a>
-        <a href="<?= base_url('admin/produk') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'produk' ? 'active' : '' ?>">
-            <i class="fas fa-boxes-stacked"></i>
-            <span>Produk</span>
-        </a>
-        <a href="<?= base_url('admin/kategori') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'kategori' ? 'active' : '' ?>">
-            <i class="fas fa-tags"></i>
-            <span>Kategori</span>
-        </a>
-        <a href="<?= base_url('admin/pesanan') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'pesanan' ? 'active' : '' ?>">
-            <i class="fas fa-receipt"></i>
-            <span>Pesanan</span>
-        </a>
-        <?php $unread_chats = get_instance()->M_chat->count_unread_admin(); ?>
-        <a href="<?= base_url('admin/chat') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'chat' ? 'active' : '' ?>">
-            <i class="fas fa-comments"></i>
-            <span>Chat Pelanggan</span>
-            <?php if ($unread_chats > 0): ?>
-                <span class="badge bg-warning text-dark rounded-pill ms-auto"><?= $unread_chats ?></span>
+        <a href="<?= site_url('admin') ?>" class="nav-item-admin <?= !trim((string) $this->uri->segment(2)) ? 'active' : '' ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        <a href="<?= site_url('admin/produk') ?>" class="nav-item-admin <?= (strpos(current_url(), 'produk') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-box"></i> Produk</a>
+        <a href="<?= site_url('admin/kategori') ?>" class="nav-item-admin <?= (strpos(current_url(), 'kategori') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-tags"></i> Kategori</a>
+        <a href="<?= site_url('admin/pesanan') ?>" class="nav-item-admin <?= (strpos(current_url(), 'pesanan') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-receipt"></i> Pesanan</a>
+        <a href="<?= site_url('admin/chat') ?>" class="nav-item-admin <?= (strpos(current_url(), 'chat') !== FALSE) ? 'active' : '' ?>">
+            <i class="fa-solid fa-comments"></i> Chat Pelanggan
+            <?php if ($unread_chat > 0): ?>
+                <span class="badge rounded-pill bg-danger"><?= $unread_chat ?></span>
             <?php endif; ?>
         </a>
-        <a href="<?= base_url('admin/ratings') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'ratings' ? 'active' : '' ?>">
-            <i class="fas fa-star"></i>
-            <span>Ratings & Review</span>
-        </a>
-        <a href="<?= base_url('admin/users') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'users' ? 'active' : '' ?>">
-            <i class="fas fa-users"></i>
-            <span>Pengguna</span>
-        </a>
-        <a href="<?= base_url('admin/rekomendasi') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'rekomendasi' ? 'active' : '' ?>">
-            <i class="fas fa-brain"></i>
-            <span>Rekomendasi AI</span>
-        </a>
+        <a href="<?= site_url('admin/ratings') ?>" class="nav-item-admin <?= (strpos(current_url(), 'ratings') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-star"></i> Ratings</a>
+        <a href="<?= site_url('admin/users') ?>" class="nav-item-admin <?= (strpos(current_url(), 'users') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-users"></i> Pengguna</a>
+        <a href="<?= site_url('admin/rekomendasi') ?>" class="nav-item-admin <?= (strpos(current_url(), 'rekomendasi') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-wand-magic-sparkles"></i> Rekomendasi AI</a>
     </nav>
-
-    <div class="sidebar-logout-wrapper border-top border-secondary border-opacity-10 mt-auto pt-4">
-        <a href="<?= base_url('logout') ?>" class="nav-item-admin text-danger">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </a>
+    <div class="sidebar-logout-wrapper">
+        <a href="#" onclick="document.getElementById('logoutForm').submit(); return false;" class="nav-item-admin"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a>
     </div>
 </aside>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<!-- Main Content Area -->
+<!-- ===== MAIN ===== -->
 <main class="admin-main">
-    <!-- Topbar Info -->
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        <div>
-            <h4 class="fw-bold mb-0 text-white"><?= isset($title) ? $title : 'Dashboard Overview' ?></h4>
-            <p class="text-muted small mb-0"><?= date('l, d F Y') ?></p>
-        </div>
-        
-        <div class="d-flex align-items-center gap-3">
-            <div class="text-end d-none d-md-block">
-                <h6 class="fw-bold mb-0 text-white"><?= $this->session->userdata('username') ?></h6>
-                <small class="text-warning">Administrator</small>
-            </div>
-            <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 45px; height: 45px; font-size: 1.2rem;">
-                <?= strtoupper(substr($this->session->userdata('username'), 0, 1)) ?>
-            </div>
-        </div>
-    </div>
 
-    <!-- Content injection -->
+    <!-- Topbar -->
+    <header class="admin-topbar">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
+        <nav class="breadcrumb-admin">
+            <span class="crumb-root">Admin</span>
+            <span class="crumb-sep">/</span>
+            <span class="crumb-current"><?= $page_title ?></span>
+        </nav>
+        <div class="topbar-right">
+            <span class="topbar-date"><i class="fa-regular fa-calendar"></i> <?= date('D, d M Y') ?></span>
+            <div class="dropdown profile-menu">
+                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="avatar-circle"><?= strtoupper(substr($username, 0, 1)) ?></span>
+                    <span class="profile-name">
+                        <strong><?= htmlspecialchars($username) ?></strong>
+                        <small>Administrator</small>
+                    </span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="<?= site_url('/') ?>" target="_blank"><i class="fa-solid fa-store"></i> Lihat Toko</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="document.getElementById('logoutForm').submit(); return false;"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <form id="logoutForm" action="<?= site_url('auth/logout') ?>" method="post" class="d-none"></form>
+
+    <div class="admin-page">
+
+<!-- Content injection -->

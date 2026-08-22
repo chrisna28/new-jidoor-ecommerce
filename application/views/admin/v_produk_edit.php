@@ -1,75 +1,109 @@
-<div class="mb-5">
-    <a href="<?= base_url('admin/produk') ?>" class="btn btn-admin-outline px-4 mb-4">
-        <i class="fas fa-arrow-left me-2"></i> Kembali ke Daftar
+<?php if ($s = $this->session->flashdata('success')): ?><div class="js-flash d-none" data-type="success" data-msg="<?= htmlspecialchars($s) ?>"></div><?php endif; ?>
+<?php if ($e = $this->session->flashdata('error')): ?><div class="js-flash d-none" data-type="error" data-msg="<?= htmlspecialchars($e) ?>"></div><?php endif; ?>
+
+<div class="page-head page-head-flex">
+    <a href="<?= base_url('admin/produk') ?>" class="btn-back-pill" title="Kembali ke daftar produk">
+        <i class="fas fa-arrow-left"></i>
     </a>
-    <h2 class="fw-bold text-white">Edit <span class="text-info">Produk</span></h2>
-    <p class="text-muted">Perbarui informasi produk <strong>#<?= $product->id ?></strong></p>
+    <div>
+        <h2 class="page-title mb-0">Edit Produk</h2>
+        <p class="page-sub mb-0">Perbarui informasi produk <strong>#<?= $product->id ?></strong></p>
+    </div>
 </div>
 
 <form method="post" action="<?= base_url('admin/produk/update') ?>" enctype="multipart/form-data">
     <?= csrf_field() ?>
     <input type="hidden" name="id" value="<?= $product->id ?>">
     <div class="row g-4">
-        <!-- Main Form -->
+        <!-- ===== Kolom utama ===== -->
         <div class="col-lg-8">
+
+            <!-- Informasi Produk -->
             <div class="admin-card">
+                <div class="sec-head">
+                    <span class="sec-icon" style="background:var(--accent-soft);color:var(--accent);"><i class="fas fa-circle-info"></i></span>
+                    <div>
+                        <div class="sec-title">Informasi Produk</div>
+                        <div class="sec-hint">Data utama yang ditampilkan di katalog pelanggan.</div>
+                    </div>
+                </div>
+
                 <div class="mb-4">
-                    <label class="form-label text-muted small text-uppercase fw-700 ls-1">Nama Produk</label>
+                    <label class="flabel">Nama Produk <span class="req">*</span></label>
                     <input type="text" name="name" class="form-control-admin w-100" value="<?= htmlspecialchars($product->name) ?>" required>
                 </div>
-                
+
                 <div class="mb-4">
-                    <label class="form-label text-muted small text-uppercase fw-700 ls-1">Kategori</label>
+                    <label class="flabel">Kategori <span class="req">*</span></label>
                     <select name="category_id" class="form-select form-control-admin" required>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= $cat->id ?>" <?= $cat->id == $product->category_id ? 'selected' : '' ?>><?= htmlspecialchars($cat->name) ?></option>
                         <?php endforeach ?>
                     </select>
                 </div>
-                
+
                 <div class="mb-0">
-                    <label class="form-label text-muted small text-uppercase fw-700 ls-1">Deskripsi Produk</label>
+                    <label class="flabel">Deskripsi Produk</label>
                     <textarea name="description" class="form-control-admin w-100" rows="8"><?= htmlspecialchars($product->description) ?></textarea>
                 </div>
             </div>
 
             <!-- Variasi Produk (ala Shopee) -->
             <div class="admin-card mt-4">
-                <div class="admin-card-title">Variasi Produk</div>
-                <p class="text-muted small mb-4">Tentukan nama variasi beserta pilihannya, lalu tabel kombinasi dibuat otomatis. Perubahan menggantikan seluruh variasi lama. Kosongkan keduanya untuk produk tanpa variasi.</p>
+                <div class="sec-head">
+                    <span class="sec-icon" style="background:var(--info-bg);color:var(--info);"><i class="fas fa-sliders"></i></span>
+                    <div>
+                        <div class="sec-title">Variasi Produk</div>
+                        <div class="sec-hint">Tentukan nama variasi beserta pilihannya, lalu tabel kombinasi dibuat otomatis. Perubahan menggantikan seluruh variasi lama. Kosongkan keduanya untuk produk tanpa variasi.</div>
+                    </div>
+                </div>
 
                 <div class="row g-3">
                     <div class="col-md-5">
-                        <label class="form-label text-muted small text-uppercase fw-700 ls-1">Nama Variasi 1</label>
-                        <input type="text" id="varName1" name="variant_name1" value="<?= htmlspecialchars($product->variant_name1 ?: 'Warna') ?>" maxlength="50" class="form-control-admin w-100" oninput="VB.rebuild()">
+                        <div class="tier-box h-100">
+                            <div class="tier-tag">Variasi 1</div>
+                            <label class="flabel">Nama Variasi 1</label>
+                            <input type="text" id="varName1" name="variant_name1" value="<?= htmlspecialchars($product->variant_name1 ?: 'Warna') ?>" maxlength="50" class="form-control-admin w-100" oninput="VB.rebuild()">
+                        </div>
                     </div>
                     <div class="col-md-7">
-                        <label class="form-label text-muted small text-uppercase fw-700 ls-1">Pilihan Variasi 1</label>
-                        <input type="text" id="chipInput1" class="form-control-admin w-100" placeholder="Ketik pilihan (mis. Hitam) lalu tekan Enter" autocomplete="off">
-                        <div id="chips1" class="d-flex flex-wrap gap-2 mt-2"></div>
+                        <div class="tier-box h-100">
+                            <div class="tier-tag">Pilihan</div>
+                            <label class="flabel">Pilihan Variasi 1</label>
+                            <input type="text" id="chipInput1" class="form-control-admin w-100" placeholder="Ketik pilihan (mis. Hitam) lalu tekan Enter" autocomplete="off">
+                            <div class="tier-tag tier-tag-inline">untuk: <span id="tierTag1">Warna</span></div>
+                            <div id="chips1" class="d-flex flex-wrap gap-2 mt-2"></div>
+                        </div>
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label text-muted small text-uppercase fw-700 ls-1">Nama Variasi 2 <span class="fw-normal">(opsional)</span></label>
-                        <input type="text" id="varName2" name="variant_name2" value="<?= htmlspecialchars($product->variant_name1 === $product->variant_name2 ? '' : ($product->variant_name2 ?: '')) ?>" maxlength="50" placeholder="mis. Ukuran / Tinggi" class="form-control-admin w-100" oninput="VB.rebuild()">
+                        <div class="tier-box h-100">
+                            <div class="tier-tag">Variasi 2 <span class="fw-normal opacity-50">(opsional)</span></div>
+                            <label class="flabel">Nama Variasi 2</label>
+                            <input type="text" id="varName2" name="variant_name2" value="<?= htmlspecialchars($product->variant_name1 === $product->variant_name2 ? '' : ($product->variant_name2 ?: '')) ?>" maxlength="50" placeholder="mis. Ukuran / Tinggi" class="form-control-admin w-100" oninput="VB.rebuild()">
+                        </div>
                     </div>
                     <div class="col-md-7">
-                        <label class="form-label text-muted small text-uppercase fw-700 ls-1">Pilihan Variasi 2</label>
-                        <input type="text" id="chipInput2" class="form-control-admin w-100" placeholder="Ketik pilihan lalu tekan Enter" autocomplete="off">
-                        <div id="chips2" class="d-flex flex-wrap gap-2 mt-2"></div>
+                        <div class="tier-box h-100">
+                            <div class="tier-tag">Pilihan</div>
+                            <label class="flabel">Pilihan Variasi 2</label>
+                            <input type="text" id="chipInput2" class="form-control-admin w-100" placeholder="Ketik pilihan lalu tekan Enter" autocomplete="off">
+                            <div class="tier-tag tier-tag-inline">untuk: <span id="tierTag2">Variasi 2</span></div>
+                            <div id="chips2" class="d-flex flex-wrap gap-2 mt-2"></div>
+                        </div>
                     </div>
                 </div>
 
                 <div id="matrixWrap" class="d-none mt-4">
-                    <div class="d-flex flex-wrap gap-3 align-items-end mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div class="matrix-bar">
                         <div>
-                            <label class="form-label text-muted small mb-1">Isi semua selisih harga (± Rp)</label>
+                            <label class="flabel mb-1">Isi semua selisih harga (± Rp)</label>
                             <div class="d-flex gap-2">
                                 <input type="number" id="bulkDelta" class="form-control-admin" style="width:120px" value="0">
                                 <button type="button" class="btn btn-sm btn-admin-outline px-3" onclick="VB.fillAll('Delta')">Terapkan</button>
                             </div>
                         </div>
                         <div>
-                            <label class="form-label text-muted small mb-1">Isi semua stok</label>
+                            <label class="flabel mb-1">Isi semua stok</label>
                             <div class="d-flex gap-2">
                                 <input type="number" id="bulkStock" class="form-control-admin" style="width:120px" min="0" value="1">
                                 <button type="button" class="btn btn-sm btn-admin-outline px-3" onclick="VB.fillAll('Stock')">Terapkan</button>
@@ -77,9 +111,9 @@
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-dark table-borderless align-middle mb-0" id="matrixTable">
+                        <table class="table table-borderless align-middle mb-0 vb-matrix" id="matrixTable">
                             <thead>
-                                <tr id="matrixHead" class="text-muted small text-uppercase ls-1"></tr>
+                                <tr id="matrixHead"></tr>
                             </thead>
                             <tbody></tbody>
                         </table>
@@ -88,47 +122,71 @@
             </div>
         </div>
 
-        <!-- Sidebar Form -->
+        <!-- ===== Sidebar ===== -->
         <div class="col-lg-4">
-            <div class="admin-card mb-4">
-                <div class="admin-card-title">Inventori & Harga</div>
-                <div class="mb-4">
-                    <label class="form-label text-muted small text-uppercase fw-700 ls-1">Harga Jual (Rp)</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary text-muted rounded-start-3">Rp</span>
-                        <input type="number" name="price" class="form-control-admin rounded-start-0" value="<?= $product->price ?>" required min="0">
+            <div class="sticky-side">
+                <div class="admin-card mb-4">
+                    <div class="sec-head">
+                        <span class="sec-icon" style="background:var(--success-bg);color:var(--success);"><i class="fas fa-wallet"></i></span>
+                        <div>
+                            <div class="sec-title">Inventori &amp; Harga</div>
+                            <div class="sec-hint">Harga dasar produk sebelum selisih variasi.</div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                    <label class="flabel">Harga Jual <span class="req">*</span></label>
+                    <div class="money-field">
+                        <span class="money-prefix">Rp</span>
+                        <input type="number" name="price" class="form-control-admin num" value="<?= $product->price ?>" required min="0">
+                    </div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="flabel">Stok Barang <span class="req">*</span></label>
+                        <input type="number" name="stock" class="form-control-admin w-100 num" value="<?= $product->stock ?>" required min="0">
+                        <small class="form-text text-muted mt-1">Jika produk punya variasi, stok diatur per kombinasi di tabel variasi.</small>
                     </div>
                 </div>
-                <div class="mb-0">
-                    <label class="form-label text-muted small text-uppercase fw-700 ls-1">Stok Barang</label>
-                    <input type="number" name="stock" class="form-control-admin w-100" value="<?= $product->stock ?>" required min="0">
-                </div>
-            </div>
 
-            <div class="admin-card mb-4">
-                <div class="admin-card-title">Fitur Khusus</div>
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" name="is_custom" value="1" id="isCustomSwitch" <?= !empty($product->is_custom) ? 'checked' : '' ?>>
-                    <label class="form-check-label text-white small fw-bold" for="isCustomSwitch">
-                        Produk bisa custom
-                    </label>
+                <div class="admin-card mb-4">
+                    <div class="sec-head">
+                        <span class="sec-icon" style="background:var(--warning-bg);color:var(--warning);"><i class="fas fa-wand-magic-sparkles"></i></span>
+                        <div>
+                            <div class="sec-title">Fitur Khusus</div>
+                        </div>
+                    </div>
+                    <div class="switch-row">
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" role="switch" name="is_custom" value="1" id="isCustomSwitch" <?= !empty($product->is_custom) ? 'checked' : '' ?>>
+                            <label class="form-check-label small fw-bold" for="isCustomSwitch" style="color: var(--text-1);">
+                                Produk bisa custom
+                            </label>
+                        </div>
+                        <span class="switch-badge"><i class="fas fa-pen-ruler me-1"></i>Custom Order</span>
+                    </div>
+                    <p class="text-muted small mb-0 mt-3">Pelanggan dapat menulis permintaan custom saat membeli dan mengunggah gambar referensi saat checkout.</p>
                 </div>
-                <p class="text-muted small mb-0 mt-2">Pelanggan dapat menulis permintaan custom saat membeli dan mengunggah gambar referensi saat checkout.</p>
-            </div>
 
-            <div class="admin-card mb-4">
-                <div class="admin-card-title">Media Produk</div>
-                <div class="text-center p-4 rounded-4 border-2 border-dashed border-secondary border-opacity-30 bg-dark bg-opacity-50 cursor-pointer mb-3" onclick="document.getElementById('imgInput').click()">
-                    <img id="imgPreview" src="<?= $product->image && $product->image !== 'default.jpg' ? base_url('uploads/products/'.$product->image) : 'https://placehold.co/400x400/0b0e14/8b949e?text=No+Image' ?>" class="img-fluid rounded-4 shadow-sm mb-3">
-                    <p class="small text-muted mb-0">Klik untuk ganti gambar produk</p>
+                <div class="admin-card mb-4">
+                    <div class="sec-head">
+                        <span class="sec-icon" style="background:var(--accent-soft);color:var(--accent);"><i class="fas fa-image"></i></span>
+                        <div>
+                            <div class="sec-title">Media Produk</div>
+                            <div class="sec-hint">Gunakan foto rasio 1:1 untuk hasil terbaik.</div>
+                        </div>
+                    </div>
+                    <div class="upload-dropzone" onclick="document.getElementById('imgInput').click()">
+                        <img id="imgPreview" src="<?= $product->image && $product->image !== 'default.jpg' ? base_url('uploads/products/'.$product->image) : 'https://placehold.co/400x300/f1f5f9/94a3b8?text=No+Image' ?>" class="img-fluid rounded mb-3">
+                        <p class="small text-muted mb-0"><i class="fas fa-cloud-arrow-up me-1"></i> Klik untuk ganti gambar produk</p>
+                    </div>
+                    <input type="file" id="imgInput" name="image" accept="image/*" class="d-none" onchange="previewImg(this)">
                 </div>
-                <input type="file" id="imgInput" name="image" accept="image/*" class="d-none" onchange="previewImg(this)">
-            </div>
 
-            <div class="d-grid">
-                <button type="submit" class="btn btn-info py-3 fw-bold shadow-lg text-white">
-                    <i class="fas fa-sync-alt me-2"></i> Perbarui Produk
-                </button>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-admin-primary py-3 fw-bold">
+                        <i class="fas fa-sync-alt me-2"></i> Perbarui Produk
+                    </button>
+                    <a href="<?= base_url('admin/produk') ?>" class="btn btn-link text-muted small text-decoration-none">Batalkan tanpa menyimpan</a>
+                </div>
             </div>
         </div>
     </div>
@@ -146,12 +204,6 @@ function previewImg(input) {
 }
 </script>
 
-<style>
-.vb-chip{display:inline-flex;align-items:center;gap:.4rem;background:#23262f;border:1px solid #3a3f4b;color:#fff;border-radius:999px;padding:.35rem .5rem .35rem .9rem;font-size:.8rem;}
-.vb-chip button{background:none;border:none;color:#8b949e;font-size:1.05rem;line-height:1;padding:0 .25rem;cursor:pointer;}
-.vb-chip button:hover{color:#dc3545;}
-#matrixTable td{vertical-align:middle;}
-</style>
 <script>
 // ===== Pembangun Variasi ala Shopee =====
 const VB = {
@@ -235,8 +287,8 @@ const VB = {
                 tr.dataset.c = c;
                 tr.dataset.s = s;
                 tr.innerHTML =
-                    '<td class="text-white">' + c + '</td>' +
-                    (e.o2.length ? '<td class="text-white">' + s + '</td>' : '') +
+                    '<td class="fw-semibold">' + c + '</td>' +
+                    (e.o2.length ? '<td class="fw-semibold">' + s + '</td>' : '') +
                     '<td><input type="hidden" name="variant_color[]" value="' + c + '">' +
                     '<input type="hidden" name="variant_size[]" value="' + s + '">' +
                     '<input type="number" step="1" name="variant_price_delta[]" class="form-control-admin vb-delta w-100" value="' + (saved.delta !== undefined && saved.delta !== '' ? saved.delta : 0) + '"></td>' +
@@ -254,7 +306,7 @@ const VB = {
 };
 
 // Chip input: Enter/koma menambah pilihan
-['1', '2'].forEach(tier => {
+[1, 2].forEach(tier => {
     document.getElementById('chipInput' + tier).addEventListener('keydown', function (ev) {
         if (ev.key === 'Enter' || ev.key === ',') { ev.preventDefault(); VB.addChip(tier); }
     });
@@ -294,7 +346,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (o1.length || o2.length) {
         VB.store = {};
         variants.forEach(v => {
-            const key = swapped ? (v.size + '|') : (v.color + '|' + v.size);
+            // Normalisasi 'Standar' menjadi string kosong agar cocok
+            // dengan key matriks yang dibentuk rebuild()
+            const c = v.color === 'Standar' ? '' : v.color;
+            const s = v.size  === 'Standar' ? '' : v.size;
+            const key = swapped ? (s + '|') : (c + '|' + s);
             VB.store[key] = { stock: v.stock, delta: v.price_delta };
         });
         VB.opts1 = swapped ? o2 : o1;
@@ -304,4 +360,18 @@ document.addEventListener('DOMContentLoaded', function () {
         VB.rebuild();
     }
 });
+</script>
+<script>
+// Sinkronkan label kotak pilihan dengan nama variasi agar tidak tertukar
+(function () {
+    function syncTierTags() {
+        const n1 = document.getElementById('varName1').value.trim();
+        const n2 = document.getElementById('varName2').value.trim();
+        document.getElementById('tierTag1').textContent = (n1 || 'Variasi 1');
+        document.getElementById('tierTag2').textContent = (n2 || 'Variasi 2 (belum dinamai)');
+    }
+    document.addEventListener('DOMContentLoaded', syncTierTags);
+    document.getElementById('varName1').addEventListener('input', syncTierTags);
+    document.getElementById('varName2').addEventListener('input', syncTierTags);
+})();
 </script>

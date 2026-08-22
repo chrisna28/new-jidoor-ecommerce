@@ -118,6 +118,21 @@ class M_order extends CI_Model {
         return $this->db->trans_status();
     }
 
+    /**
+     * Kembalikan stok semua item pesanan (dipanggil saat pesanan
+     * ditolak / dibatalkan agar stok tidak hilang permanen)
+     */
+    public function restore_order_stock($order_id) {
+        $items = $this->db->select('product_id, variant_id, qty')->get_where('order_items', ['order_id' => $order_id])->result();
+        foreach ($items as $item) {
+            if ($item->variant_id) {
+                $this->M_product->restore_variant_stock($item->variant_id, $item->qty);
+            } else {
+                $this->M_product->restore_stock($item->product_id, $item->qty);
+            }
+        }
+    }
+
     // =======================================================
     // MIDTRANS SNAP (Revisi #6)
     // =======================================================
@@ -179,12 +194,19 @@ class M_order extends CI_Model {
     }
 
     /**
-     * Total revenue dari pesanan paid/shipped
+     * Status yang sudah terbayar (dipakai untuk revenue & statistik penjualan)
+     */
+    private function _paid_statuses() {
+        return ['paid', 'processed', 'shipped', 'delivered'];
+    }
+
+    /**
+     * Total revenue dari pesanan yang sudah terbayar
      */
     public function get_total_revenue() {
         $this->db->select('SUM(total_price) as revenue');
         $this->db->from('orders');
-        $this->db->where_in('status', ['paid', 'shipped']);
+        $this->db->where_in('status', $this->_paid_statuses());
         $row = $this->db->get()->row();
         return $row ? (float)$row->revenue : 0;
     }
@@ -193,12 +215,13 @@ class M_order extends CI_Model {
      * Revenue per bulan (12 bulan terakhir) untuk chart admin
      */
     public function get_revenue_by_month() {
-        $sql = "SELECT DATE_FORMAT(created_at, '%Y-%m') as month_key, 
-                       DATE_FORMAT(created_at, '%b %Y') as month_label, 
+        $statuses = implode("','", $this->_paid_statuses());
+        $sql = "SELECT DATE_FORMAT(created_at, '%Y-%m') as month_key,
+                       DATE_FORMAT(created_at, '%b %Y') as month_label,
                        SUM(total_price) as revenue,
                        COUNT(*) as order_count
-                FROM orders 
-                WHERE status IN ('paid','shipped') 
+                FROM orders
+                WHERE status IN ('$statuses')
                   AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
                 GROUP BY month_key, month_label
                 ORDER BY month_key ASC";
@@ -224,7 +247,7 @@ class M_order extends CI_Model {
         $this->db->join('products p', 'p.id = oi.product_id', 'left');
         $this->db->join('categories c', 'c.id = p.category_id', 'left');
         $this->db->join('orders o', 'o.id = oi.order_id', 'left');
-        $this->db->where_in('o.status', ['paid', 'shipped']);
+        $this->db->where_in('o.status', $this->_paid_statuses());
         $this->db->group_by('p.id');
         $this->db->order_by('total_sold', 'DESC');
         $this->db->limit($limit);

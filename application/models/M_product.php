@@ -255,11 +255,18 @@ class M_product extends CI_Model {
     }
 
     /**
-     * Hapus produk
+     * Hapus produk beserta data turunannya (varian, like, rating, cart)
+     * agar tidak ada baris yatim (order_items sengaja disimpan demi riwayat)
      */
     public function delete($id) {
-        $this->db->where('id', $id);
-        return $this->db->delete('products');
+        $this->db->trans_start();
+        $this->db->where('product_id', $id)->delete('product_variants');
+        $this->db->where('product_id', $id)->delete('likes');
+        $this->db->where('product_id', $id)->delete('ratings');
+        $this->db->where('product_id', $id)->delete('cart');
+        $this->db->where('id', $id)->delete('products');
+        $this->db->trans_complete();
+        return $this->db->trans_status();
     }
 
     /**
@@ -332,6 +339,37 @@ class M_product extends CI_Model {
         return $this->db->get()->result();
     }
 
+    /**
+     * Peringatan stok rendah level VARIAN (per kombinasi warna/ukuran)
+     */
+    public function get_low_stock_variants($threshold = 5, $limit = 10) {
+        $this->db->select("pv.id, pv.product_id, pv.color, pv.size, pv.stock,
+                           p.name as product_name, p.image,
+                           c.name as category_name");
+        $this->db->from('product_variants pv');
+        $this->db->join('products p', 'p.id = pv.product_id', 'left');
+        $this->db->join('categories c', 'c.id = p.category_id', 'left');
+        $this->db->where('pv.stock <=', (int) $threshold);
+        $this->db->order_by('pv.stock', 'ASC');
+        $this->db->limit((int) $limit);
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Stok rendah untuk produk TANPA varian (stok utama saja),
+     * agar tidak dobel dengan peringatan level varian.
+     */
+    public function get_low_stock_simple($threshold = 5, $limit = 10) {
+        $this->db->select('p.id, p.name, p.stock, p.image, c.name as category_name');
+        $this->db->from('products p');
+        $this->db->join('categories c', 'c.id = p.category_id', 'left');
+        $this->db->where('p.stock <=', (int) $threshold);
+        $this->db->where('p.id NOT IN (SELECT DISTINCT product_id FROM product_variants)');
+        $this->db->order_by('p.stock', 'ASC');
+        $this->db->limit((int) $limit);
+        return $this->db->get()->result();
+    }
+
     // =======================================================
     // VARIAN PRODUK (Revisi #2)
     // =======================================================
@@ -358,10 +396,11 @@ class M_product extends CI_Model {
      */
     public function save_variants($product_id, $colors, $sizes, $stocks, $price_deltas) {
         $rows = [];
-        $n = count($colors);
+        $n = max(count($colors), count($sizes), count($stocks), count($price_deltas));
         for ($i = 0; $i < $n; $i++) {
-            $color = trim($colors[$i]);
-            $size  = trim($sizes[$i]);
+            // Array form bisa tak sejajar (PHP 8.4: trim(null/array) fatal)
+            $color = isset($colors[$i]) && is_string($colors[$i]) ? trim($colors[$i]) : '';
+            $size  = isset($sizes[$i])  && is_string($sizes[$i])  ? trim($sizes[$i])  : '';
             if ($color === '' && $size === '') {
                 continue; // lewati baris kosong
             }
@@ -369,8 +408,8 @@ class M_product extends CI_Model {
                 'product_id'  => $product_id,
                 'color'       => $color !== '' ? $color : 'Standar',
                 'size'        => $size !== '' ? $size : 'Standar',
-                'stock'       => max(0, (int)$stocks[$i]),
-                'price_delta' => max(0, (float)$price_deltas[$i]),
+                'stock'       => isset($stocks[$i]) ? max(0, (int)$stocks[$i]) : 0,
+                'price_delta' => isset($price_deltas[$i]) ? (float)$price_deltas[$i] : 0, // boleh negatif (diskon varian)
             ];
         }
         if (empty($rows)) {
@@ -397,6 +436,24 @@ class M_product extends CI_Model {
      */
     public function reduce_variant_stock($variant_id, $qty) {
         $this->db->set('stock', 'stock - ' . (int)$qty, FALSE);
+        $this->db->where('id', $variant_id);
+        return $this->db->update('product_variants');
+    }
+
+    /**
+     * Kembalikan stok produk (pesanan ditolak/dibatalkan)
+     */
+    public function restore_stock($product_id, $qty) {
+        $this->db->set('stock', 'stock + ' . (int)$qty, FALSE);
+        $this->db->where('id', $product_id);
+        return $this->db->update('products');
+    }
+
+    /**
+     * Kembalikan stok varian (pesanan ditolak/dibatalkan)
+     */
+    public function restore_variant_stock($variant_id, $qty) {
+        $this->db->set('stock', 'stock + ' . (int)$qty, FALSE);
         $this->db->where('id', $variant_id);
         return $this->db->update('product_variants');
     }

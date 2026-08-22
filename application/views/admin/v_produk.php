@@ -1,22 +1,22 @@
-<div class="d-flex justify-content-between align-items-center mb-5">
+<?php if ($s = $this->session->flashdata('success')): ?><div class="js-flash d-none" data-type="success" data-msg="<?= htmlspecialchars($s) ?>"></div><?php endif; ?>
+<?php if ($e = $this->session->flashdata('error')): ?><div class="js-flash d-none" data-type="error" data-msg="<?= htmlspecialchars($e) ?>"></div><?php endif; ?>
+
+<div class="page-head toolbar">
     <div>
-        <h2 class="fw-bold text-white mb-1">Daftar Produk</h2>
-        <p class="text-muted small mb-0">Kelola katalog pintu dan aksesoris Anda.</p>
+        <h2 class="page-title">Daftar Produk</h2>
+        <p class="page-sub">Kelola katalog pintu dan aksesoris Anda.</p>
     </div>
     <a href="<?= base_url('admin/produk/tambah') ?>" class="btn btn-admin-primary">
         <i class="fas fa-plus me-2"></i> Tambah Produk
     </a>
 </div>
 
-<?php if($this->session->flashdata('success')): ?>
-    <div class="alert alert-success border-0 bg-success bg-opacity-10 text-success rounded-4 mb-4">
-        <i class="fas fa-check-circle me-2"></i><?= $this->session->flashdata('success') ?>
+<div class="admin-card p-0">
+    <div class="px-4 py-3 border-bottom" style="border-color: var(--border) !important;">
+        <input type="text" id="productSearch" class="form-control form-control-admin" style="max-width: 320px;" placeholder="Cari nama produk atau ID..." autocomplete="off">
     </div>
-<?php endif; ?>
-
-<div class="admin-card p-0 overflow-hidden">
     <div class="table-responsive">
-        <table class="table table-admin mb-0">
+        <table class="table table-admin mb-0" id="productTable">
             <thead>
                 <tr>
                     <th class="ps-4" width="100">Gambar</th>
@@ -24,49 +24,71 @@
                     <th>Kategori</th>
                     <th>Harga</th>
                     <th width="100">Stok</th>
-                    <th class="text-end pe-4" width="100">Aksi</th>
+                    <th class="text-end pe-4" width="110">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if(!empty($products)): foreach($products as $p): ?>
-                <tr>
+                <tr data-name="<?= strtolower(htmlspecialchars($p->name)) ?>" data-id="<?= $p->id ?>">
                     <td class="ps-4">
-                        <img src="<?= $p->image && $p->image !== 'default.jpg' ? base_url('uploads/products/'.$p->image) : 'https://placehold.co/50x50/161b22/8b949e?text=P' ?>" class="rounded-3 border border-secondary border-opacity-20" style="width: 56px; height: 56px; object-fit: cover;">
+                        <img src="<?= $p->image && $p->image !== 'default.jpg' ? base_url('uploads/products/'.$p->image) : 'https://placehold.co/56x56/f1f5f9/94a3b8?text=P' ?>" class="rounded border" style="width: 52px; height: 52px; object-fit: cover;">
                     </td>
                     <td>
-                        <div class="fw-bold text-white mb-1"><?= htmlspecialchars($p->name) ?></div>
-                        <div class="small text-muted" style="font-size: 0.7rem;">ID: #<?= $p->id ?></div>
+                        <div class="fw-bold mb-1"><?= htmlspecialchars($p->name) ?></div>
+                        <div class="text-muted" style="font-size: 0.72rem;">ID: #<?= $p->id ?></div>
                     </td>
-                    <td><span class="admin-badge badge-paid" style="background: rgba(255,255,255,0.05); color: #fff; font-size: 0.65rem;"><?= htmlspecialchars($p->category_name) ?></span></td>
-                    <td class="fw-bold text-white">Rp <?= number_format($p->price, 0, ',', '.') ?></td>
+                    <td><span class="badge-neutral"><?= htmlspecialchars($p->category_name) ?></span></td>
+                    <td class="fw-bold num">Rp <?= number_format($p->price, 0, ',', '.') ?></td>
                     <td>
                         <?php if($p->stock < 5): ?>
-                            <span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i><?= $p->stock ?></span>
+                            <span class="admin-badge badge-rejected"><i class="fas fa-triangle-exclamation"></i><?= $p->stock ?></span>
                         <?php else: ?>
-                            <span class="text-success fw-bold"><?= $p->stock ?></span>
+                            <span class="admin-badge badge-completed"><?= $p->stock ?></span>
                         <?php endif; ?>
                     </td>
                     <td class="text-end pe-4">
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="<?= base_url('admin/produk/edit/'.$p->id) ?>" class="btn btn-sm btn-admin-outline" style="padding: 8px 12px;">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a href="<?= base_url('admin/produk/edit/'.$p->id) ?>" class="icon-btn" title="Edit produk">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a href="<?= base_url('admin/produk/hapus/'.$p->id) ?>" class="btn btn-sm btn-outline-danger" style="padding: 8px 12px;" onclick="return confirm('Hapus produk ini?')">
+                            <a href="<?= base_url('admin/produk/hapus/'.$p->id) ?>" class="icon-btn btn-delete"
+                               data-confirm="Hapus produk &quot;<?= htmlspecialchars($p->name) ?>&quot; secara permanen?"
+                               data-confirm-title="Hapus Produk" title="Hapus produk">
                                 <i class="fas fa-trash"></i>
                             </a>
                         </div>
                     </td>
                 </tr>
                 <?php endforeach; else: ?>
-                <tr><td colspan="6" class="text-center text-muted py-5">Belum ada produk.</td></tr>
+                <tr><td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+                        <h6>Belum ada produk</h6>
+                        <p>Tambahkan produk pertama Anda ke katalog.</p>
+                        <a href="<?= base_url('admin/produk/tambah') ?>" class="btn btn-admin-primary"><i class="fas fa-plus me-2"></i>Tambah Produk</a>
+                    </div>
+                </td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
     
     <?php if(!empty($pagination)): ?>
-    <div class="mt-4 pb-2">
+    <div class="mt-4 pb-4 px-4">
         <?= $pagination ?>
     </div>
     <?php endif; ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('productSearch');
+    var rows = document.querySelectorAll('#productTable tbody tr[data-name]');
+    input.addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        rows.forEach(function (r) {
+            r.style.display = (!q || r.dataset.name.indexOf(q) !== -1 || r.dataset.id === q.replace('#', '')) ? '' : 'none';
+        });
+    });
+});
+</script>
