@@ -15,6 +15,7 @@
                     <thead>
                         <tr>
                             <th>Produk</th>
+                            <th>Varian</th>
                             <th class="text-center">Qty</th>
                             <th class="text-end">Harga</th>
                             <th class="text-end">Subtotal</th>
@@ -28,6 +29,30 @@
                                     <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/'.$item->image) : 'https://placehold.co/40x40/161b22/8b949e?text=P' ?>" class="rounded-3" style="width: 40px; height: 40px; object-fit: cover;">
                                     <span class="fw-bold text-white small"><?= htmlspecialchars($item->name) ?></span>
                                 </div>
+                            </td>
+                            <td class="small">
+                                <?php if (!empty($item->color) && $item->color !== 'Standar'): ?>
+                                    <span class="badge bg-dark border border-secondary text-white"><?= htmlspecialchars($item->variant_name1 ?: 'Variasi') ?>: <?= htmlspecialchars($item->color) ?></span>
+                                <?php endif ?>
+                                <?php if (!empty($item->size) && $item->size !== 'Standar'): ?>
+                                    <span class="badge bg-dark border border-secondary text-white mt-1"><?= htmlspecialchars($item->variant_name2 ?: 'Variasi') ?>: <?= htmlspecialchars($item->size) ?></span>
+                                <?php endif ?>
+                                <?php if (!empty($item->note)): ?>
+                                    <div class="text-muted fst-italic mt-1"><i class="fas fa-pen-nib me-1"></i><?= htmlspecialchars($item->note) ?></div>
+                                <?php endif ?>
+                                <?php if (!empty($item->custom_text) || !empty($item->custom_image)): ?>
+                                    <div class="mt-2 p-2 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-30">
+                                        <span class="fw-bold text-warning text-uppercase ls-1" style="font-size: 0.65rem;"><i class="fas fa-wand-magic-sparkles me-1"></i> Permintaan Custom</span>
+                                        <?php if (!empty($item->custom_text)): ?>
+                                            <div class="text-white fst-italic small">"<?= htmlspecialchars($item->custom_text) ?>"</div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($item->custom_image)): ?>
+                                            <a href="<?= base_url($item->custom_image) ?>" target="_blank">
+                                                <img src="<?= base_url($item->custom_image) ?>" class="img-fluid rounded-3 mt-1 border border-secondary" style="max-height: 120px;" alt="Referensi custom">
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif ?>
                             </td>
                             <td class="text-center"><?= $item->qty ?></td>
                             <td class="text-end">Rp <?= number_format($item->price, 0, ',', '.') ?></td>
@@ -99,33 +124,71 @@
                 </div>
             <?php endif ?>
 
-            <!-- Verification Actions -->
-            <?php if ($order->status === 'pending' && $order->payment_proof): ?>
+            <!-- Update Status + Tracking (Revisi #5) -->
+            <?php if (in_array($order->status, ['pending', 'paid', 'processed'])): ?>
                 <div class="p-4 rounded-4 bg-warning bg-opacity-10 border border-warning border-opacity-20">
-                    <h6 class="fw-bold text-warning mb-3"><i class="fas fa-gavel me-2"></i>Verifikasi Sekarang</h6>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <form method="post" action="<?= base_url('admin/pesanan/verifikasi/'.$order->id) ?>">
-                                <?= csrf_field() ?><input type="hidden" name="status" value="paid">
-                                <button type="submit" class="btn btn-success w-100 fw-bold py-2 rounded-3" onclick="return confirm('Konfirmasi pembayaran?')">TERIMA</button>
-                            </form>
+                    <h6 class="fw-bold text-warning mb-3"><i class="fas fa-gavel me-2"></i>Update Status Pesanan</h6>
+                    <form method="post" action="<?= base_url('admin/pesanan/verifikasi/'.$order->id) ?>">
+                        <?= csrf_field() ?>
+                        <div class="mb-3">
+                            <label class="text-muted small text-uppercase ls-1 d-block mb-1">Status Baru</label>
+                            <select name="status" id="statusSelect" class="form-select form-control-admin" required>
+                                <?php if ($order->status === 'pending'): ?>
+                                    <option value="paid">✅ Verifikasi Pembayaran (Paid)</option>
+                                    <option value="rejected">❌ Tolak Pembayaran</option>
+                                    <option value="cancelled">🚫 Batalkan Pesanan</option>
+                                <?php elseif ($order->status === 'paid'): ?>
+                                    <option value="processed">🔧 Proses Produksi</option>
+                                    <option value="shipped">🚚 Kirim Barang</option>
+                                    <option value="cancelled">🚫 Batalkan Pesanan</option>
+                                <?php else: ?>
+                                    <option value="shipped">🚚 Kirim Barang</option>
+                                    <option value="cancelled">🚫 Batalkan Pesanan</option>
+                                <?php endif ?>
+                            </select>
                         </div>
-                        <div class="col-6">
-                            <form method="post" action="<?= base_url('admin/pesanan/verifikasi/'.$order->id) ?>">
-                                <?= csrf_field() ?><input type="hidden" name="status" value="rejected">
-                                <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2 rounded-3" onclick="return confirm('Tolak pesanan?')">TOLAK</button>
-                            </form>
+                        <div class="mb-3">
+                            <label class="text-muted small text-uppercase ls-1 d-block mb-1">Keterangan (Opsional)</label>
+                            <input type="text" name="keterangan" class="form-control-admin w-100" placeholder="mis. sedang diukir, estimasi 3 hari">
                         </div>
-                    </div>
+                        <div class="row g-2 mb-3 d-none" id="shippingFields">
+                            <div class="col-7">
+                                <label class="text-muted small text-uppercase ls-1 d-block mb-1">No. Resi *</label>
+                                <input type="text" name="resi" class="form-control-admin w-100" placeholder="mis. JX1234567890">
+                            </div>
+                            <div class="col-5">
+                                <label class="text-muted small text-uppercase ls-1 d-block mb-1">Kurir *</label>
+                                <input type="text" name="courier" class="form-control-admin w-100" placeholder="mis. JNE">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100 fw-bold py-2 rounded-3"
+                                onclick="return confirm('Perbarui status pesanan?')">PERBARUI STATUS</button>
+                    </form>
                 </div>
-            <?php elseif ($order->status === 'paid'): ?>
-                <form method="post" action="<?= base_url('admin/pesanan/verifikasi/'.$order->id) ?>">
-                    <?= csrf_field() ?><input type="hidden" name="status" value="shipped">
-                    <button type="submit" class="btn btn-info w-100 fw-bold py-3 rounded-pill text-white shadow-lg" onclick="return confirm('Tandai sudah dikirim?')">
-                        <i class="fas fa-truck me-2"></i> KIRIM SEKARANG
-                    </button>
-                </form>
+            <?php endif ?>
+
+            <?php if ($order->status === 'shipped' && $order->resi): ?>
+                <div class="p-4 rounded-4 bg-info bg-opacity-10 border border-info border-opacity-20 mb-4">
+                    <h6 class="fw-bold text-info mb-2"><i class="fas fa-truck me-2"></i>Sedang Dikirim</h6>
+                    <div class="text-white small"><?= htmlspecialchars($order->courier) ?> — <span class="fw-bold"><?= htmlspecialchars($order->resi) ?></span></div>
+                    <p class="text-muted small mb-0 mt-2">Menunggu konfirmasi "Pesanan Diterima" dari pelanggan.</p>
+                </div>
             <?php endif ?>
         </div>
     </div>
 </div>
+
+<script>
+// Tampilkan field resi & kurir hanya saat status "shipped" (Revisi #5)
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.getElementById('statusSelect');
+    const shippingFields = document.getElementById('shippingFields');
+    if (!statusSelect || !shippingFields) return;
+
+    function toggleShipping() {
+        shippingFields.classList.toggle('d-none', statusSelect.value !== 'shipped');
+    }
+    statusSelect.addEventListener('change', toggleShipping);
+    toggleShipping();
+});
+</script>

@@ -38,6 +38,36 @@
 
 /*
  *---------------------------------------------------------------
+ * MUAT FILE .env KE ENVIRONMENT PHP
+ *---------------------------------------------------------------
+ *
+ * File .env di root proyek berisi kredensial lokal (DB, Midtrans, dll)
+ * dan TIDAK di-commit ke git. Format: KEY = value ; baris diawali # = komentar.
+ * Nilai asli dari server (SetEnv/shell) selalu menang bila sudah ada.
+ */
+$jidoorEnvFile = __DIR__ . '/.env';
+if (is_readable($jidoorEnvFile)) {
+	foreach (file($jidoorEnvFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $jidoorLine) {
+		$jidoorLine = trim($jidoorLine);
+		if ($jidoorLine === '' || $jidoorLine[0] === '#') { continue; }
+		$jidoorParts = explode('=', $jidoorLine, 2);
+		if (count($jidoorParts) !== 2) { continue; }
+		$jidoorKey = trim($jidoorParts[0]);
+		$jidoorVal = trim($jidoorParts[1]);
+		if (strlen($jidoorVal) > 1 && ($jidoorVal[0] === '"' || $jidoorVal[0] === "'") && $jidoorVal[0] === substr($jidoorVal, -1)) {
+			$jidoorVal = substr($jidoorVal, 1, -1);
+		}
+		if ($jidoorKey !== '' && getenv($jidoorKey) === false) {
+			putenv("{$jidoorKey}={$jidoorVal}");
+			$_ENV[$jidoorKey]    = $jidoorVal;
+			$_SERVER[$jidoorKey] = $jidoorVal;
+		}
+	}
+}
+unset($jidoorEnvFile, $jidoorLine, $jidoorParts, $jidoorKey, $jidoorVal);
+
+/*
+ *---------------------------------------------------------------
  * APPLICATION ENVIRONMENT
  *---------------------------------------------------------------
  *
@@ -53,7 +83,7 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
+	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : (getenv('CI_ENVIRONMENT') ?: 'development'));
 
 /*
  *---------------------------------------------------------------
@@ -304,6 +334,13 @@ switch (ENVIRONMENT)
 	}
 
 	define('VIEWPATH', $view_folder.DIRECTORY_SEPARATOR);
+
+/*
+ * --------------------------------------------------------------------
+ * COMPOSER AUTOLOAD (Midtrans, Ratchet, dll.)
+ * --------------------------------------------------------------------
+ */
+require_once __DIR__ . '/vendor/autoload.php';
 
 /*
  * --------------------------------------------------------------------

@@ -103,6 +103,30 @@ $is_auth = in_array(uri_string(), ['login', 'register', 'auth/login', 'auth/regi
                 location.reload();
             });
     }
+
+    function toggleLike(productId, btn) {
+        fetch('<?= base_url('welcome/like_toggle/') ?>' + productId)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    window.location.href = '<?= base_url('login') ?>';
+                    return;
+                }
+
+                const icon = btn.querySelector('i');
+                const count = btn.querySelector('.like-count');
+                if (data.liked) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    icon.classList.add('text-danger');
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.remove('text-danger');
+                    icon.classList.add('far');
+                }
+                if (count) count.textContent = data.like_count;
+            });
+    }
 </script>
 
 <!-- Bootstrap 5.3 JS Bundle -->

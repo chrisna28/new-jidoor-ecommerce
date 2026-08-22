@@ -18,6 +18,15 @@
 $is_home = (uri_string() == '');
 $is_auth = in_array(uri_string(), ['login', 'register', 'auth/login', 'auth/register']);
 $user_id = $this->session->userdata('user_id');
+
+// Widget chat (Revisi #7) — hanya untuk customer yang login
+$show_chat = false;
+if ($user_id && $this->session->userdata('role') !== 'admin') {
+    $this->load->library('chat_token');
+    $chat_token   = Chat_Token::make($user_id, 'user');
+    $chat_user_id = (int)$user_id;
+    $show_chat    = true;
+}
 ?>
 
 <!-- Navbar Minimalis -->
@@ -100,4 +109,8 @@ $user_id = $this->session->userdata('user_id');
         <div class="alert alert-danger border-0 shadow-lg text-center rounded-0 py-3 px-5" role="alert"><?= $this->session->flashdata('error') ?></div>
     <?php endif; ?>
 </div>
+<?php endif; ?>
+
+<?php if ($show_chat): ?>
+    <?= $this->load->view('frontend/components/v_chat_widget', ['chat_token' => $chat_token, 'chat_user_id' => $chat_user_id], TRUE) ?>
 <?php endif; ?>

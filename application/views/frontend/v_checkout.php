@@ -4,7 +4,7 @@
         <p class="text-muted small text-uppercase ls-2">Enter your information to complete the order</p>
     </div>
 
-    <form action="<?= base_url('checkout/proses') ?>" method="post">
+    <form action="<?= base_url('checkout/proses') ?>" method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
         <div class="row g-5">
             <!-- Column 1: Shipping Details -->
@@ -37,15 +37,52 @@
 
                 <div class="mb-5">
                     <h5 class="fw-bold text-uppercase ls-2 mb-4 pb-2 border-bottom">2. Payment Method</h5>
-                    <div class="p-4 bg-light border-start border-dark border-3">
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" value="bank_transfer" checked>
-                            <label class="form-check-label fw-bold ls-1" for="bank_transfer">
-                                BANK TRANSFER (MANUAL VERIFICATION)
-                            </label>
+                    <ul class="nav nav-pills mb-3 gap-2" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-0 fw-bold ls-1 small px-4" id="tab-online" data-bs-toggle="pill" data-bs-target="#pane-online" type="button" role="tab">
+                                <i class="fas fa-bolt me-2"></i>BAYAR ONLINE
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-0 fw-bold ls-1 small px-4" id="tab-manual" data-bs-toggle="pill" data-bs-target="#pane-manual" type="button" role="tab">
+                                <i class="fas fa-university me-2"></i>TRANSFER MANUAL
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <!-- Tab 1: Midtrans Snap -->
+                        <div class="tab-pane fade show active" id="pane-online" role="tabpanel">
+                            <div class="p-4 bg-light border-start border-success border-3">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="pay_online" value="midtrans" checked>
+                                    <label class="form-check-label fw-bold ls-1" for="pay_online">
+                                        QRIS / VIRTUAL ACCOUNT / E-WALLET / KARTU (MIDTRANS)
+                                    </label>
+                                </div>
+                                <div class="ps-4">
+                                    <p class="small text-muted mb-2">Bayar aman via Midtrans — pilih metode favoritmu di popup pembayaran. Status pesanan diperbarui otomatis setelah pembayaran berhasil.</p>
+                                    <div class="d-flex gap-3 opacity-75">
+                                        <i class="fab fa-cc-visa fs-3"></i>
+                                        <i class="fab fa-cc-mastercard fs-3"></i>
+                                        <i class="fas fa-qrcode fs-3"></i>
+                                        <i class="fas fa-wallet fs-3"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="ps-4">
-                            <p class="small text-muted mb-0">Please transfer to our Bank Mandiri account: <strong>123-456-7890 (JiDoor Store)</strong>. You will need to upload proof of payment after checkout.</p>
+                        <!-- Tab 2: Transfer manual -->
+                        <div class="tab-pane fade" id="pane-manual" role="tabpanel">
+                            <div class="p-4 bg-light border-start border-dark border-3">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" value="bank_transfer">
+                                    <label class="form-check-label fw-bold ls-1" for="bank_transfer">
+                                        BANK TRANSFER (MANUAL VERIFICATION)
+                                    </label>
+                                </div>
+                                <div class="ps-4">
+                                    <p class="small text-muted mb-0">Please transfer to our Bank Mandiri account: <strong>123-456-7890 (JiDoor Store)</strong>. You will need to upload proof of payment after checkout.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -54,6 +91,26 @@
                     <h5 class="fw-bold text-uppercase ls-2 mb-4 pb-2 border-bottom">3. Additional Notes</h5>
                     <textarea name="note" class="form-control-mixtas w-100" rows="2" placeholder="OPTIONAL: ANY SPECIAL INSTRUCTIONS?"></textarea>
                 </div>
+
+                <?php $has_custom_items = false; ?>
+                <?php foreach ($cart_items as $ci): if (!empty($ci->is_custom)) { $has_custom_items = true; break; } endforeach; ?>
+                <?php if ($has_custom_items): ?>
+                <div class="mb-5">
+                    <h5 class="fw-bold text-uppercase ls-2 mb-4 pb-2 border-bottom">
+                        4. Gambar Referensi Custom
+                        <span class="text-muted small fw-normal text-lowercase ms-2">(jpg/png, maks 2 MB — opsional)</span>
+                    </h5>
+                    <?php foreach ($cart_items as $ci): if (empty($ci->is_custom)) continue; ?>
+                        <div class="p-3 mb-3 bg-light border rounded-3">
+                            <label class="small fw-bold ls-1 d-block mb-2"><?= htmlspecialchars($ci->name) ?></label>
+                            <input type="file" name="custom_image[<?= $ci->id ?>]" accept="image/jpeg,image/png" class="form-control form-control-sm bg-white">
+                            <?php if (!empty($ci->custom_text)): ?>
+                                <div class="small text-muted fst-italic mt-2"><i class="fas fa-pen-nib me-1"></i>"<?= htmlspecialchars($ci->custom_text) ?>"</div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- Column 2: Order Summary -->
@@ -70,6 +127,11 @@
                                     </div>
                                     <div>
                                         <div class="small fw-bold ls-1"><?= htmlspecialchars($item->name) ?></div>
+                                        <?php if ((!empty($item->color) && $item->color !== 'Standar') || (!empty($item->size) && $item->size !== 'Standar')): ?>
+                                            <div class="text-muted" style="font-size: 0.7rem;">
+                                                <?= trim((!empty($item->color) && $item->color !== 'Standar' ? $item->color . ' / ' : '') . (!empty($item->size) && $item->size !== 'Standar' ? $item->size : ''), ' /') ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <div class="text-muted" style="font-size: 0.7rem;">Qty: <?= $item->qty ?></div>
                                     </div>
                                 </div>

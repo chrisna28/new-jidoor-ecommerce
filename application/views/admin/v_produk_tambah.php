@@ -32,6 +32,60 @@
                     <textarea name="description" class="form-control-admin w-100" rows="8" placeholder="Tuliskan spesifikasi, material, dan keunggulan produk..."></textarea>
                 </div>
             </div>
+
+            <!-- Variasi Produk (ala Shopee) -->
+            <div class="admin-card mt-4">
+                <div class="admin-card-title">Variasi Produk</div>
+                <p class="text-muted small mb-4">Tentukan nama variasi beserta pilihannya, lalu tabel kombinasi dibuat otomatis. Kosongkan keduanya untuk produk tanpa variasi.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label text-muted small text-uppercase fw-700 ls-1">Nama Variasi 1</label>
+                        <input type="text" id="varName1" name="variant_name1" value="Warna" maxlength="50" class="form-control-admin w-100" oninput="VB.rebuild()">
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label text-muted small text-uppercase fw-700 ls-1">Pilihan Variasi 1</label>
+                        <input type="text" id="chipInput1" class="form-control-admin w-100" placeholder="Ketik pilihan (mis. Hitam) lalu tekan Enter" autocomplete="off">
+                        <div id="chips1" class="d-flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label text-muted small text-uppercase fw-700 ls-1">Nama Variasi 2 <span class="fw-normal">(opsional)</span></label>
+                        <input type="text" id="varName2" name="variant_name2" value="" maxlength="50" placeholder="mis. Ukuran / Tinggi" class="form-control-admin w-100" oninput="VB.rebuild()">
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label text-muted small text-uppercase fw-700 ls-1">Pilihan Variasi 2</label>
+                        <input type="text" id="chipInput2" class="form-control-admin w-100" placeholder="Ketik pilihan lalu tekan Enter" autocomplete="off">
+                        <div id="chips2" class="d-flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+                </div>
+
+                <div id="matrixWrap" class="d-none mt-4">
+                    <div class="d-flex flex-wrap gap-3 align-items-end mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                        <div>
+                            <label class="form-label text-muted small mb-1">Isi semua selisih harga (± Rp)</label>
+                            <div class="d-flex gap-2">
+                                <input type="number" id="bulkDelta" class="form-control-admin" style="width:120px" value="0">
+                                <button type="button" class="btn btn-sm btn-admin-outline px-3" onclick="VB.fillAll('Delta')">Terapkan</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label text-muted small mb-1">Isi semua stok</label>
+                            <div class="d-flex gap-2">
+                                <input type="number" id="bulkStock" class="form-control-admin" style="width:120px" min="0" value="1">
+                                <button type="button" class="btn btn-sm btn-admin-outline px-3" onclick="VB.fillAll('Stock')">Terapkan</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-borderless align-middle mb-0" id="matrixTable">
+                            <thead>
+                                <tr id="matrixHead" class="text-muted small text-uppercase ls-1"></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Sidebar Form -->
@@ -49,6 +103,17 @@
                     <label class="form-label text-muted small text-uppercase fw-700 ls-1">Stok Barang</label>
                     <input type="number" name="stock" class="form-control-admin w-100" placeholder="0" required min="0">
                 </div>
+            </div>
+
+            <div class="admin-card mb-4">
+                <div class="admin-card-title">Fitur Khusus</div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" name="is_custom" value="1" id="isCustomSwitch">
+                    <label class="form-check-label text-white small fw-bold" for="isCustomSwitch">
+                        Produk bisa custom
+                    </label>
+                </div>
+                <p class="text-muted small mb-0 mt-2">Pelanggan dapat menulis permintaan custom saat membeli dan mengunggah gambar referensi saat checkout.</p>
             </div>
 
             <div class="admin-card mb-4">
@@ -79,4 +144,129 @@ function previewImg(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+</script>
+
+<style>
+.vb-chip{display:inline-flex;align-items:center;gap:.4rem;background:#23262f;border:1px solid #3a3f4b;color:#fff;border-radius:999px;padding:.35rem .5rem .35rem .9rem;font-size:.8rem;}
+.vb-chip button{background:none;border:none;color:#8b949e;font-size:1.05rem;line-height:1;padding:0 .25rem;cursor:pointer;}
+.vb-chip button:hover{color:#dc3545;}
+#matrixTable td{vertical-align:middle;}
+</style>
+<script>
+// ===== Pembangun Variasi ala Shopee =====
+const VB = {
+    opts1: [],
+    opts2: [],
+    store: {},
+
+    addChip(tier) {
+        const input = document.getElementById('chipInput' + tier);
+        const val = input.value.trim().replace(/,+$/, '');
+        if (!val) return;
+        input.value = '';
+        const list = tier === 1 ? this.opts1 : this.opts2;
+        if (list.some(o => o.toLowerCase() === val.toLowerCase()) || list.length >= 30) return;
+        list.push(val);
+        this.renderChips(tier);
+        this.rebuild();
+    },
+
+    removeChip(tier, idx) {
+        (tier === 1 ? this.opts1 : this.opts2).splice(idx, 1);
+        this.renderChips(tier);
+        this.rebuild();
+    },
+
+    renderChips(tier) {
+        const wrap = document.getElementById('chips' + tier);
+        const list = tier === 1 ? this.opts1 : this.opts2;
+        wrap.innerHTML = '';
+        list.forEach((o, i) => {
+            const chip = document.createElement('span');
+            chip.className = 'vb-chip';
+            chip.innerHTML = o + ' <button type="button" aria-label="hapus" onclick="VB.removeChip(' + tier + ',' + i + ')">&times;</button>';
+            wrap.appendChild(chip);
+        });
+    },
+
+    // Nilai variasi & nama yang efektif (jika hanya Variasi 2 diisi, digeser ke posisi 1)
+    effective() {
+        let o1 = this.opts1.slice(), o2 = this.opts2.slice(), swapped = false;
+        const n2raw = document.getElementById('varName2').value.trim();
+        if (!o1.length && o2.length) { swapped = true; }
+        const n1 = swapped ? (n2raw || 'Variasi') : (document.getElementById('varName1').value.trim() || 'Variasi 1');
+        const n2 = swapped ? 'Variasi 2' : (n2raw || 'Variasi 2');
+        return { o1, o2, n1, n2, swapped };
+    },
+
+    capture() {
+        document.querySelectorAll('#matrixTable tbody tr').forEach(tr => {
+            this.store[tr.dataset.c + '|' + tr.dataset.s] = {
+                stock: tr.querySelector('.vb-stock').value,
+                delta: tr.querySelector('.vb-delta').value
+            };
+        });
+    },
+
+    rebuild() {
+        this.capture();
+        const tbody = document.querySelector('#matrixTable tbody');
+        const head  = document.getElementById('matrixHead');
+        const wrap  = document.getElementById('matrixWrap');
+        const e = this.effective();
+
+        if (!e.o1.length && !e.o2.length) {
+            wrap.classList.add('d-none');
+            head.innerHTML = ''; tbody.innerHTML = '';
+            return;
+        }
+
+        head.innerHTML =
+            '<th>' + e.n1 + '</th>' +
+            (e.o2.length ? '<th>' + e.n2 + '</th>' : '') +
+            '<th style="width:26%">Selisih Harga (± Rp)</th>' +
+            '<th style="width:18%">Stok</th>';
+
+        tbody.innerHTML = '';
+        e.o1.forEach(c => {
+            (e.o2.length ? e.o2 : ['']).forEach(s => {
+                const saved = this.store[c + '|' + s] || {};
+                const tr = document.createElement('tr');
+                tr.dataset.c = c;
+                tr.dataset.s = s;
+                tr.innerHTML =
+                    '<td class="text-white">' + c + '</td>' +
+                    (e.o2.length ? '<td class="text-white">' + s + '</td>' : '') +
+                    '<td><input type="hidden" name="variant_color[]" value="' + c + '">' +
+                    '<input type="hidden" name="variant_size[]" value="' + s + '">' +
+                    '<input type="number" step="1" name="variant_price_delta[]" class="form-control-admin vb-delta w-100" value="' + (saved.delta !== undefined && saved.delta !== '' ? saved.delta : 0) + '"></td>' +
+                    '<td><input type="number" min="0" name="variant_stock[]" class="form-control-admin vb-stock w-100" value="' + (saved.stock || '') + '" placeholder="0"></td>';
+                tbody.appendChild(tr);
+            });
+        });
+        wrap.classList.remove('d-none');
+    },
+
+    fillAll(kind) {
+        const v = document.getElementById('bulk' + kind).value;
+        document.querySelectorAll(kind === 'Stock' ? '.vb-stock' : '.vb-delta').forEach(inp => inp.value = v);
+    }
+};
+
+// Chip input: Enter/koma menambah pilihan
+['1', '2'].forEach(tier => {
+    document.getElementById('chipInput' + tier).addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ',') { ev.preventDefault(); VB.addChip(tier); }
+    });
+});
+
+// Saat submit: paksa stok terisi & geser nama variasi bila perlu
+document.querySelector('form').addEventListener('submit', function () {
+    document.querySelectorAll('#matrixTable .vb-stock').forEach(i => { if (i.value === '') i.value = '0'; });
+    const e = VB.effective();
+    if (e.swapped) {
+        document.getElementById('varName1').value = document.getElementById('varName2').value.trim() || 'Variasi';
+        document.getElementById('varName2').value = '';
+    }
+});
 </script>

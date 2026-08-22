@@ -3,6 +3,10 @@
 # Environment files
 .env
 
+# User-uploaded custom reference images (data pribadi user)
+uploads/custom/*
+!uploads/custom/index.html
+
 application/cache/*
 !application/cache/index.html
 

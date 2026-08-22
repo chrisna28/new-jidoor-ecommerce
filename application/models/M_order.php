@@ -67,7 +67,7 @@ class M_order extends CI_Model {
      * Ambil item-item dalam satu order
      */
     public function get_order_items($order_id) {
-        $this->db->select('oi.*, p.name, p.image, p.slug');
+        $this->db->select('oi.*, p.name, p.image, p.slug, p.variant_name1, p.variant_name2');
         $this->db->from('order_items oi');
         $this->db->join('products p', 'p.id = oi.product_id', 'left');
         $this->db->where('oi.order_id', $order_id);
@@ -75,11 +75,85 @@ class M_order extends CI_Model {
     }
 
     /**
-     * Update status pesanan
+     * Update status pesanan + catat riwayat tracking (Revisi #5)
      */
-    public function update_status($order_id, $status) {
+    public function update_status($order_id, $status, $keterangan = NULL, $resi = NULL, $courier = NULL) {
+        $this->db->trans_start();
+
+        $data = ['status' => $status];
+        if ($resi)    { $data['resi']    = $resi; }
+        if ($courier) { $data['courier'] = $courier; }
         $this->db->where('id', $order_id);
-        return $this->db->update('orders', ['status' => $status]);
+        $this->db->update('orders', $data);
+
+        $this->db->insert('order_tracking', [
+            'order_id'    => $order_id,
+            'status'      => $status,
+            'description' => $keterangan,
+            'resi'        => $resi,
+            'courier'     => $courier,
+        ]);
+
+        $this->db->trans_complete();
+        return $this->db->trans_status();
+    }
+
+    /**
+     * Riwayat tracking pesanan (urut waktu naik)
+     */
+    public function get_tracking($order_id) {
+        return $this->db->where('order_id', $order_id)
+                        ->order_by('created_at', 'ASC')
+                        ->get('order_tracking')->result();
+    }
+
+    /**
+     * Hapus order beserta itemnya (untuk pembatalan saat validasi checkout gagal)
+     */
+    public function delete_order($order_id) {
+        $this->db->trans_start();
+        $this->db->where('order_id', $order_id)->delete('order_items');
+        $this->db->where('id', $order_id)->delete('orders');
+        $this->db->trans_complete();
+        return $this->db->trans_status();
+    }
+
+    // =======================================================
+    // MIDTRANS SNAP (Revisi #6)
+    // =======================================================
+
+    /**
+     * Simpan snap token + transaction order_id Midtrans
+     */
+    public function save_snap_token($order_id, $token, $midtrans_order_id = NULL) {
+        $this->db->where('id', $order_id);
+        return $this->db->update('orders', [
+            'snap_token'        => $token,
+            'midtrans_order_id' => $midtrans_order_id,
+        ]);
+    }
+
+    /**
+     * Tandai paid HANYA jika masih pending (idempotent — aman dipanggil
+     * berulang dari webhook + finish redirect)
+     */
+    public function mark_paid_if_pending($order_id) {
+        $order = $this->get_order_detail($order_id);
+        if (!$order || $order->status !== 'pending') {
+            return FALSE; // sudah diproses sebelumnya
+        }
+        return $this->update_status($order_id, 'paid', 'Pembayaran online diverifikasi via Midtrans');
+    }
+
+    /**
+     * Batalkan HANYA jika masih pending (deny/cancel/expire)
+     */
+    public function mark_cancelled_if_pending($order_id) {
+        $order = $this->get_order_detail($order_id);
+        if (!$order || $order->status !== 'pending') {
+            return FALSE;
+        }
+        return $this->update_status($order_id, 'cancelled', 'Pembayaran online gagal/kedaluwarsa');
     }
 
     /**

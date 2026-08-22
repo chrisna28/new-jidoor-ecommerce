@@ -125,4 +125,13 @@ class M_rating extends CI_Model {
         $this->db->where('id', $id);
         return $this->db->delete('ratings');
     }
+
+    /**
+     * Hitung jumlah komentar (review berisi teks) suatu produk
+     */
+    public function count_reviews($product_id) {
+        return $this->db->where('product_id', $product_id)
+                        ->where("review IS NOT NULL AND review <> ''", NULL, FALSE)
+                        ->count_all_results('ratings');
+    }
 }

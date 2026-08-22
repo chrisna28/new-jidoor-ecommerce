@@ -16,6 +16,8 @@ $route['login/aksi']       = 'auth/login_aksi';
 $route['register']         = 'auth/register';
 $route['register/aksi']    = 'auth/register_aksi';
 $route['logout']           = 'auth/logout';
+$route['lupa-password']    = 'auth/lupa_password';
+$route['reset-password/(:any)'] = 'auth/reset_password/$1';
 
 // -------------------------------------------------------
 // FRONTEND ROUTES
@@ -30,6 +32,13 @@ $route['produk/(:any)']              = 'welcome/detail/$1';
 $route['rate']                       = 'welcome/rate';
 $route['riwayat-rating']             = 'welcome/rating_history';
 $route['wishlist']                   = 'welcome/wishlist';
+
+// -------------------------------------------------------
+// CHAT ROUTES (Revisi #7)
+// -------------------------------------------------------
+$route['chat']                = 'chat/index';
+$route['chat/history']        = 'chat/history';
+$route['chat/offline-message'] = 'chat/offline_message';
 
 // -------------------------------------------------------
 // CART ROUTES
@@ -47,6 +56,14 @@ $route['checkout/bukti/(:num)']   = 'cart/upload_bukti/$1';
 // -------------------------------------------------------
 $route['pesanan']              = 'order/riwayat';
 $route['pesanan/detail/(:num)'] = 'order/detail/$1';
+$route['pesanan/diterima/(:num)'] = 'order/terima/$1';
+$route['pesanan/bayar/(:num)']    = 'order/bayar_midtrans/$1';
+$route['pesanan/midtrans-finish/(:num)'] = 'order/midtrans_finish/$1';
+
+// -------------------------------------------------------
+// PAYMENT GATEWAY (Midtrans webhook — Revisi #6)
+// -------------------------------------------------------
+$route['payment/notification'] = 'payment/notification';
 
 // -------------------------------------------------------
 // ADMIN ROUTES
@@ -64,3 +81,5 @@ $route['admin/pesanan/verifikasi/(:num)'] = 'admin/verify_payment/$1';
 $route['admin/users']                    = 'admin/users';
 $route['admin/ratings']                  = 'admin/ratings';
 $route['admin/ratings/hapus/(:num)']      = 'admin/rating_hapus/$1';
+$route['admin/chat']                     = 'admin/chat';
+$route['admin/chat/(:num)']              = 'admin/chat_thread/$1';

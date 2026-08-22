@@ -32,5 +32,11 @@
         <a href="<?= base_url('produk/' . $p->slug) ?>" class="product-name text-decoration-none"><?= htmlspecialchars($p->name) ?></a>
         <span class="product-cat"><?= htmlspecialchars($p->category_name) ?></span>
         <div class="product-price">Rp <?= number_format($p->price, 0, ',', '.') ?></div>
+        <div class="d-flex align-items-center gap-3 mt-2 small text-muted">
+            <button type="button" onclick="event.preventDefault(); toggleLike(<?= $p->id ?>, this)" class="btn btn-link p-0 m-0 text-decoration-none text-muted small like-toggle-btn">
+                <i class="<?= !empty($p->is_liked) ? 'fas text-danger' : 'far' ?> fa-heart me-1"></i><span class="like-count"><?= (int)($p->like_count ?? 0) ?></span>
+            </button>
+            <span><i class="far fa-comment me-1"></i><?= (int)($p->comment_count ?? 0) ?></span>
+        </div>
     </div>
 </div>

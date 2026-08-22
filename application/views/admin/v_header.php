@@ -40,6 +40,14 @@
             <i class="fas fa-receipt"></i>
             <span>Pesanan</span>
         </a>
+        <?php $unread_chats = get_instance()->M_chat->count_unread_admin(); ?>
+        <a href="<?= base_url('admin/chat') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'chat' ? 'active' : '' ?>">
+            <i class="fas fa-comments"></i>
+            <span>Chat Pelanggan</span>
+            <?php if ($unread_chats > 0): ?>
+                <span class="badge bg-warning text-dark rounded-pill ms-auto"><?= $unread_chats ?></span>
+            <?php endif; ?>
+        </a>
         <a href="<?= base_url('admin/ratings') ?>" class="nav-item-admin <?= isset($active_tab) && $active_tab == 'ratings' ? 'active' : '' ?>">
             <i class="fas fa-star"></i>
             <span>Ratings & Review</span>

@@ -10,7 +10,8 @@ class Admin extends CI_Controller {
     public function __construct() {
         parent::__construct();
         date_default_timezone_set('Asia/Jakarta');
-        $this->load->model(['M_product', 'M_order', 'M_user', 'M_rating']);
+        $this->load->model(['M_product', 'M_order', 'M_user', 'M_rating', 'M_chat']);
+        $this->load->library('chat_token');
         // Middleware: wajib login sebagai admin
         if ($this->session->userdata('role') !== 'admin') {
             redirect('login');
@@ -160,7 +161,7 @@ class Admin extends CI_Controller {
                 }
             }
 
-            $this->M_product->insert([
+            $product_id = $this->M_product->insert([
                 'category_id' => $this->input->post('category_id'),
                 'name'        => $name,
                 'slug'        => $slug,
@@ -168,7 +169,20 @@ class Admin extends CI_Controller {
                 'price'       => $this->input->post('price'),
                 'stock'       => $this->input->post('stock'),
                 'image'       => $image,
+                'is_custom'   => $this->input->post('is_custom') ? 1 : 0,
+                'variant_name1' => $this->_variant_name('variant_name1', 'Warna'),
+                'variant_name2' => $this->_variant_name('variant_name2', 'Ukuran'),
             ]);
+
+            // Simpan varian warna/ukuran (Revisi #2)
+            $this->M_product->save_variants(
+                $product_id,
+                (array)$this->input->post('variant_color'),
+                (array)$this->input->post('variant_size'),
+                (array)$this->input->post('variant_stock'),
+                (array)$this->input->post('variant_price_delta')
+            );
+
             $this->session->set_flashdata('success', 'Produk berhasil ditambahkan.');
             redirect('admin/produk');
         } else {
@@ -183,6 +197,7 @@ class Admin extends CI_Controller {
         $data = [
             'title'      => 'Edit Produk',
             'product'    => $product,
+            'variants'   => $this->M_product->get_variants($id),
             'categories' => $this->M_product->get_categories(),
         ];
         $this->load->view('admin/v_header', $data);
@@ -205,6 +220,9 @@ class Admin extends CI_Controller {
                 'description' => $this->input->post('description', TRUE),
                 'price'       => $this->input->post('price'),
                 'stock'       => $this->input->post('stock'),
+                'is_custom'   => $this->input->post('is_custom') ? 1 : 0,
+                'variant_name1' => $this->_variant_name('variant_name1', 'Warna'),
+                'variant_name2' => $this->_variant_name('variant_name2', 'Ukuran'),
             ];
 
             if (!empty($_FILES['image']['name'])) {
@@ -216,12 +234,30 @@ class Admin extends CI_Controller {
             }
 
             $this->M_product->update($id, $data_update);
+
+            // Simpan ulang varian warna/ukuran (Revisi #2)
+            $this->M_product->save_variants(
+                $id,
+                (array)$this->input->post('variant_color'),
+                (array)$this->input->post('variant_size'),
+                (array)$this->input->post('variant_stock'),
+                (array)$this->input->post('variant_price_delta')
+            );
+
             $this->session->set_flashdata('success', 'Produk berhasil diperbarui.');
             redirect('admin/produk');
         } else {
             $this->session->set_flashdata('error', validation_errors());
             redirect('admin/produk/edit/' . $id);
         }
+    }
+
+    /**
+     * Nama variasi ala Shopee — fallback ke default bila kosong (maks 50 char)
+     */
+    private function _variant_name($field, $default) {
+        $name = trim($this->input->post($field, TRUE));
+        return ($name === '') ? $default : mb_substr($name, 0, 50);
     }
 
     public function produk_hapus($id) {
@@ -293,6 +329,7 @@ class Admin extends CI_Controller {
             'title' => 'Detail Pesanan #' . $id,
             'order' => $order,
             'items' => $this->M_order->get_order_items($id),
+            'tracking' => $this->M_order->get_tracking($id),
         ];
         $this->load->view('admin/v_header', $data);
         $this->load->view('admin/v_pesanan_detail', $data);
@@ -300,18 +337,67 @@ class Admin extends CI_Controller {
     }
 
     /**
-     * Verifikasi / Tolak Pembayaran
+     * Verifikasi / Tolak Pembayaran / Update status + tracking (Revisi #5)
      */
     public function verify_payment($order_id) {
-        $status = $this->input->post('status');
-        $allowed = ['paid', 'rejected', 'shipped'];
+        $status    = $this->input->post('status');
+        $keterangan = $this->input->post('keterangan', TRUE);
+        $resi      = $this->input->post('resi', TRUE);
+        $courier   = $this->input->post('courier', TRUE);
+        $allowed   = ['paid', 'rejected', 'processed', 'shipped', 'cancelled'];
+
         if (!in_array($status, $allowed)) {
             redirect('admin/pesanan');
         }
-        $this->M_order->update_status($order_id, $status);
-        $label = $status === 'paid' ? 'Dikonfirmasi' : ($status === 'rejected' ? 'Ditolak' : 'Dikirim');
-        $this->session->set_flashdata('success', 'Status pesanan #' . $order_id . ' berhasil diubah menjadi: ' . $label);
+
+        // Resi & kurir wajib saat barang dikirim
+        if ($status === 'shipped' && (empty($resi) || empty($courier))) {
+            $this->session->set_flashdata('error', 'Nomor resi dan nama kurir wajib diisi saat mengirim barang.');
+            redirect('admin/pesanan/detail/' . $order_id);
+        }
+
+        $label = [
+            'paid'      => 'Pembayaran diverifikasi',
+            'rejected'  => 'Pembayaran ditolak',
+            'processed' => 'Pesanan sedang diproses',
+            'shipped'   => 'Pesanan telah dikirim',
+            'cancelled' => 'Pesanan dibatalkan',
+        ][$status];
+
+        $this->M_order->update_status($order_id, $status, $keterangan ?: $label, $resi, $courier);
+        $this->session->set_flashdata('success', 'Status pesanan #' . $order_id . ' berhasil diperbarui.');
         redirect('admin/pesanan/detail/' . $order_id);
+    }
+
+    // -------------------------------------------------------
+    // CHAT CUSTOMER (Revisi #7)
+    // -------------------------------------------------------
+    public function chat() {
+        $data = [
+            'title'      => 'Chat Pelanggan',
+            'inbox'      => $this->M_chat->get_inbox(),
+            'active_tab' => 'chat',
+        ];
+        $this->load->view('admin/v_header', $data);
+        $this->load->view('admin/v_chat_inbox', $data);
+        $this->load->view('admin/v_footer', $data);
+    }
+
+    public function chat_thread($conversation_id) {
+        $conv = $this->M_chat->get_conversation($conversation_id);
+        if (!$conv) { redirect('admin/chat'); }
+        $this->M_chat->mark_read($conversation_id, 'admin');
+
+        $data = [
+            'title'   => 'Chat: ' . ($conv->username ?: 'User #' . $conv->user_id),
+            'conv'    => $conv,
+            'history' => $this->M_chat->get_history($conversation_id),
+            'chat_products' => $this->M_product->get_chat_list(),
+            'active_tab' => 'chat',
+        ];
+        $this->load->view('admin/v_header', $data);
+        $this->load->view('admin/v_chat_thread', $data);
+        $this->load->view('admin/v_footer', $data);
     }
 
     // -------------------------------------------------------

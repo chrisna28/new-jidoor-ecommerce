@@ -43,6 +43,16 @@ class M_product extends CI_Model {
     }
 
     /**
+     * Daftar ringkas produk untuk picker rekomendasi di chat admin
+     */
+    public function get_chat_list() {
+        return $this->db->select('id, name, price, image')
+                        ->from('products')
+                        ->order_by('name', 'ASC')
+                        ->get()->result_array();
+    }
+
+    /**
      * Hitung produk per kategori
      */
     public function count_by_category($category_slug) {
@@ -320,5 +330,173 @@ class M_product extends CI_Model {
         $this->db->order_by('p.stock', 'ASC');
         $this->db->limit(10);
         return $this->db->get()->result();
+    }
+
+    // =======================================================
+    // VARIAN PRODUK (Revisi #2)
+    // =======================================================
+
+    /**
+     * Ambil semua varian suatu produk
+     */
+    public function get_variants($product_id) {
+        return $this->db->where('product_id', $product_id)
+                        ->order_by('id', 'ASC')
+                        ->get('product_variants')->result();
+    }
+
+    /**
+     * Ambil satu varian berdasarkan ID
+     */
+    public function get_variant($variant_id) {
+        return $this->db->get_where('product_variants', ['id' => $variant_id])->row();
+    }
+
+    /**
+     * Simpan ulang seluruh varian produk (strategi replace-all).
+     * Input dari array form repeater admin.
+     */
+    public function save_variants($product_id, $colors, $sizes, $stocks, $price_deltas) {
+        $rows = [];
+        $n = count($colors);
+        for ($i = 0; $i < $n; $i++) {
+            $color = trim($colors[$i]);
+            $size  = trim($sizes[$i]);
+            if ($color === '' && $size === '') {
+                continue; // lewati baris kosong
+            }
+            $rows[] = [
+                'product_id'  => $product_id,
+                'color'       => $color !== '' ? $color : 'Standar',
+                'size'        => $size !== '' ? $size : 'Standar',
+                'stock'       => max(0, (int)$stocks[$i]),
+                'price_delta' => max(0, (float)$price_deltas[$i]),
+            ];
+        }
+        if (empty($rows)) {
+            // Minimal satu varian standar agar produk tetap bisa dibeli
+            $rows[] = [
+                'product_id'  => $product_id,
+                'color'       => 'Standar',
+                'size'        => 'Standar',
+                'stock'       => 0,
+                'price_delta' => 0,
+            ];
+        }
+
+        $this->db->trans_start();
+        $this->db->where('product_id', $product_id)->delete('product_variants');
+        $this->db->insert_batch('product_variants', $rows);
+        $this->db->trans_complete();
+
+        return $this->db->trans_status();
+    }
+
+    /**
+     * Kurangi stok varian
+     */
+    public function reduce_variant_stock($variant_id, $qty) {
+        $this->db->set('stock', 'stock - ' . (int)$qty, FALSE);
+        $this->db->where('id', $variant_id);
+        return $this->db->update('product_variants');
+    }
+
+    // =======================================================
+    // LIKE PRODUK (Revisi #1)
+    // =======================================================
+
+    /**
+     * Toggle like produk oleh user (unik per user per produk)
+     */
+    public function toggle_like($user_id, $product_id) {
+        $exists = $this->db->get_where('likes', [
+            'user_id'    => $user_id,
+            'product_id' => $product_id
+        ])->row();
+
+        if ($exists) {
+            $this->db->delete('likes', ['id' => $exists->id]);
+            $liked = FALSE;
+        } else {
+            $this->db->insert('likes', [
+                'user_id'    => $user_id,
+                'product_id' => $product_id
+            ]);
+            $liked = TRUE;
+        }
+
+        return [
+            'liked'      => $liked,
+            'like_count' => $this->count_likes($product_id)
+        ];
+    }
+
+    /**
+     * Jumlah like suatu produk
+     */
+    public function count_likes($product_id) {
+        return $this->db->where('product_id', $product_id)
+                        ->count_all_results('likes');
+    }
+
+    /**
+     * Cek apakah user sudah like produk
+     */
+    public function is_liked_by($user_id, $product_id) {
+        return $this->db->get_where('likes', [
+            'user_id'    => $user_id,
+            'product_id' => $product_id
+        ])->num_rows() > 0;
+    }
+
+    /**
+     * Tempelkan like_count & comment_count ke array objek produk.
+     * Dipakai kartu produk di home/katalog/search/detail terkait.
+     * Jika $user_id diberikan, juga set is_liked per produk.
+     */
+    public function attach_social_counts($products, $user_id = null) {
+        if (empty($products)) return $products;
+
+        $ids = [];
+        foreach ($products as $p) {
+            $ids[] = (int)$p->id;
+        }
+
+        $like_map = $comment_map = [];
+        $liked_ids = [];
+
+        $likes = $this->db->select('product_id, COUNT(*) AS total')
+                          ->where_in('product_id', $ids)
+                          ->group_by('product_id')
+                          ->get('likes')->result();
+        foreach ($likes as $l) {
+            $like_map[$l->product_id] = (int)$l->total;
+        }
+
+        $comments = $this->db->select('product_id, COUNT(*) AS total')
+                             ->where_in('product_id', $ids)
+                             ->where("review IS NOT NULL AND review <> ''", NULL, FALSE)
+                             ->group_by('product_id')
+                             ->get('ratings')->result();
+        foreach ($comments as $c) {
+            $comment_map[$c->product_id] = (int)$c->total;
+        }
+
+        if ($user_id) {
+            $my_likes = $this->db->select('product_id')
+                                 ->where('user_id', $user_id)
+                                 ->where_in('product_id', $ids)
+                                 ->get('likes')->result();
+            foreach ($my_likes as $ml) {
+                $liked_ids[] = (int)$ml->product_id;
+            }
+        }
+
+        foreach ($products as $p) {
+            $p->like_count    = isset($like_map[$p->id]) ? $like_map[$p->id] : 0;
+            $p->comment_count = isset($comment_map[$p->id]) ? $comment_map[$p->id] : 0;
+            $p->is_liked      = in_array((int)$p->id, $liked_ids);
+        }
+        return $products;
     }
 }

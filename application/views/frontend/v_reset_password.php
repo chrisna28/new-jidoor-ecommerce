@@ -13,31 +13,28 @@
     <div class="auth-form-container bg-white">
         <div class="w-100" style="max-width: 450px; margin: 0 auto;">
             <div class="mb-5">
-                <h2 class="fw-bold mb-2 ls-1" style="font-size: 2.5rem;">LOGIN</h2>
-                <p class="text-muted small ls-1">PLEASE ENTER YOUR DETAILS TO LOGIN.</p>
+                <h2 class="fw-bold mb-2 ls-1" style="font-size: 2.5rem;">RESET PASSWORD</h2>
+                <p class="text-muted small ls-1">AKUN: <?= htmlspecialchars($masked_email) ?>. BUAT PASSWORD BARU ANDA.</p>
             </div>
 
-            <form action="<?= base_url('auth/login_aksi') ?>" method="post">
+            <form action="<?= base_url('reset-password/' . $token) ?>" method="post">
                 <?= csrf_field() ?>
                 <div class="mb-4">
-                    <label class="small fw-bold text-uppercase ls-1">Username</label>
-                    <input type="text" name="username" class="form-control-mixtas w-100" placeholder="ENTER YOUR USERNAME" required autofocus>
+                    <label class="small fw-bold text-uppercase ls-1">Password Baru</label>
+                    <input type="password" name="password" class="form-control-mixtas w-100" placeholder="MINIMAL 6 KARAKTER" minlength="6" required autofocus>
                 </div>
 
                 <div class="mb-5">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <label class="small fw-bold text-uppercase ls-1">Password</label>
-                        <a href="<?= base_url('lupa-password') ?>" class="text-decoration-none small text-muted">Forgot?</a>
-                    </div>
-                    <input type="password" name="password" class="form-control-mixtas w-100" placeholder="ENTER YOUR PASSWORD" required>
+                    <label class="small fw-bold text-uppercase ls-1">Konfirmasi Password</label>
+                    <input type="password" name="confirm_password" class="form-control-mixtas w-100" placeholder="ULANGI PASSWORD BARU" minlength="6" required>
                 </div>
 
                 <button type="submit" class="btn btn-dark w-100 py-3 rounded-0 fw-bold ls-1 mb-4">
-                    LOGIN NOW
+                    SIMPAN PASSWORD BARU
                 </button>
 
                 <div class="text-center">
-                    <p class="text-muted small ls-1">DON'T HAVE AN ACCOUNT? <a href="<?= base_url('register') ?>" class="text-dark fw-bold text-decoration-none">CREATE ONE</a></p>
+                    <p class="text-muted small ls-1"><a href="<?= base_url('login') ?>" class="text-dark fw-bold text-decoration-none">BACK TO LOGIN</a></p>
                 </div>
             </form>
         </div>

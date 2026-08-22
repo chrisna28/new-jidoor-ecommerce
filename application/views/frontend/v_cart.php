@@ -27,6 +27,19 @@
                                             </div>
                                             <div>
                                                 <h6 class="fw-bold mb-1 ls-1"><?= htmlspecialchars($item->name) ?></h6>
+                                                <?php if (!empty($item->color) && $item->color !== 'Standar' || !empty($item->size) && $item->size !== 'Standar'): ?>
+                                                    <p class="small mb-1">
+                                                        <?php if (!empty($item->color) && $item->color !== 'Standar'): ?>
+                                                            <span class="badge bg-light text-dark border me-1"><?= htmlspecialchars($item->variant_name1 ?: 'Variasi') ?>: <?= htmlspecialchars($item->color) ?></span>
+                                                        <?php endif; ?>
+                                                        <?php if (!empty($item->size) && $item->size !== 'Standar'): ?>
+                                                            <span class="badge bg-light text-dark border"><?= htmlspecialchars($item->variant_name2 ?: 'Variasi') ?>: <?= htmlspecialchars($item->size) ?></span>
+                                                        <?php endif; ?>
+                                                    </p>
+                                                <?php endif; ?>
+                                                <?php if (!empty($item->note)): ?>
+                                                    <p class="small text-muted mb-2 fst-italic"><i class="fas fa-pen-nib me-1"></i><?= htmlspecialchars($item->note) ?></p>
+                                                <?php endif; ?>
                                                 <p class="small text-muted mb-2">Rp <?= number_format($item->price, 0, ',', '.') ?></p>
                                                 <a href="<?= base_url('keranjang/hapus/' . $item->id) ?>" class="text-decoration-none small text-danger fw-bold ls-1"><i class="fas fa-times me-1"></i> REMOVE</a>
                                             </div>

@@ -78,4 +78,20 @@ class M_user extends CI_Model {
     public function is_email_taken($email) {
         return $this->db->get_where('users', ['email' => $email])->num_rows() > 0;
     }
+
+    /**
+     * Update password user berdasarkan ID (sudah ter-hash)
+     */
+    public function update_password($user_id, $hash) {
+        $this->db->where('id', $user_id);
+        return $this->db->update('users', ['password' => $hash]);
+    }
+
+    /**
+     * Update password user berdasarkan email (sudah ter-hash)
+     */
+    public function update_password_by_email($email, $hash) {
+        $this->db->where('email', $email);
+        return $this->db->update('users', ['password' => $hash]);
+    }
 }

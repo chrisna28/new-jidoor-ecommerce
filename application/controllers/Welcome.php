@@ -143,6 +143,7 @@ class Welcome extends CI_Controller {
             }
             
             if (!empty($sec_products)) {
+                $sec_products = $this->M_product->attach_social_counts($sec_products, $user_id);
                 $sections[] = [
                     'title' => $sec['title'],
                     'origin' => $sec['origin'],
@@ -150,6 +151,8 @@ class Welcome extends CI_Controller {
                 ];
             }
         }
+
+        $latest_products = $this->M_product->attach_social_counts($latest_products, $user_id);
 
         $data = [
             'title'           => 'JiDoor Store — Toko Pintu & Aksesoris Terbaik',
@@ -209,6 +212,7 @@ class Welcome extends CI_Controller {
         }
 
         $data_products = $this->M_product->get_all($per_page, $from, $recommended_ids);
+        $data_products = $this->M_product->attach_social_counts($data_products, $user_id);
 
         // -----------------------------------------------------------
         // DIVERSITY BADGES — Assign contextual badges to products
@@ -270,6 +274,7 @@ class Welcome extends CI_Controller {
         }
 
         $data_products = $this->M_product->get_by_category($slug, $per_page, $from, $recommended_ids);
+        $data_products = $this->M_product->attach_social_counts($data_products, $user_id);
 
         // Diversity badges
         $origins = $this->_diversify_badges($data_products, $origins);
@@ -339,12 +344,19 @@ class Welcome extends CI_Controller {
         $hybrid_origins = [];
         foreach ($hybrid_recs as $hr) { $hybrid_origins[$hr['id']] = $hr['origin']; }
 
+        // Count like & komentar (Revisi #1)
+        $related = $this->M_product->attach_social_counts($related, $user_id);
+
         $data = [
             'title'       => $product->name . ' — JiDoor Store',
             'product'     => $product,
+            'variants'    => $this->M_product->get_variants($product->id),
             'avg_rating'  => $avg_rating,
             'user_rating' => $user_rating,
             'is_wishlist' => $user_id ? $this->M_wishlist->check_exists($user_id, $product->id) : false,
+            'like_count'    => $this->M_product->count_likes($product->id),
+            'comment_count' => $this->M_rating->count_reviews($product->id),
+            'is_liked'      => $user_id ? $this->M_product->is_liked_by($user_id, $product->id) : false,
             'related'     => array_values($related),
             'similar_ids' => $similar_ids,
             'recommended_ids' => $hybrid_ids,
@@ -404,7 +416,10 @@ class Welcome extends CI_Controller {
         $data = [
             'title'      => 'Hasil Pencarian: "' . htmlspecialchars($keyword) . '" — JiDoor',
             'keyword'    => $keyword,
-            'products'   => $this->M_product->search($keyword, $per_page, $from, $recommended_ids),
+            'products'   => $this->M_product->attach_social_counts(
+                                $this->M_product->search($keyword, $per_page, $from, $recommended_ids),
+                                $user_id
+                            ),
             'recommended_ids' => $recommended_ids,
             'rec_origins' => $origins,
             'categories' => $this->M_product->get_categories(),
@@ -519,6 +534,24 @@ class Welcome extends CI_Controller {
             $this->M_wishlist->add($user_id, $product_id);
             echo json_encode(['status' => 'added', 'message' => 'Ditambahkan ke wishlist.']);
         }
+    }
+
+    // -------------------------------------------------------
+    // LIKE PRODUK (AJAX)
+    // -------------------------------------------------------
+    public function like_toggle($product_id) {
+        $user_id = $this->session->userdata('user_id');
+        if (!$user_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Silakan login terlebih dahulu.']);
+            return;
+        }
+
+        $result = $this->M_product->toggle_like($user_id, (int)$product_id);
+        echo json_encode([
+            'status'     => 'success',
+            'liked'      => $result['liked'],
+            'like_count' => $result['like_count']
+        ]);
     }
 
     private function _get_user_wishlist_ids() {
