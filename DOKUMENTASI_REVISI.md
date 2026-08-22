@@ -919,6 +919,11 @@ chat tetap jalan (WebSocket lokal). Tracking manual tidak butuh internet sama se
 - [x] Idempotent: `mark_paid_if_pending` / `mark_cancelled_if_pending` mencegah status ganda
 - [ ] Snap popup terbuka; pembayaran sandbox sukses → status `paid` otomatis *(isi key asli lalu uji dengan kartu 4811 1111 1111 1114)*
 - Catatan: kolom baru `orders.midtrans_order_id` untuk mapping status API (token Snap tidak bisa dipakai query status).
+- **Migrasi kunci ke `.env` (2026-08):**
+  - [x] Kunci Server/Client Midtrans dipindah dari `config/midtrans.php` ke file `.env` di root (diabaikan git); config kini membaca `getenv()` dan menampilkan pesan jelas bila `.env` belum diisi
+  - [x] Loader `.env` ditambahkan di `index.php` (format `KEY = value`, komentar `#`, nilai server asli selalu menang) — siap dipakai konfigurasi lain (DB, dll.)
+  - [x] Teruji end-to-end: order baru → endpoint `pesanan/bayar/{id}` mengembalikan Snap token valid dari API sandbox
+  - Tips: kunci sandbox Midtrans tidak selalu berawalan `SB-Mid…` — validasi lingkungan cukup dengan panggil `GET /v2/{order_id}/status` di kedua host API
 
 ### F7 Chat — ✅ SELESAI & TERUJI
 - [x] Pesan muncul real-time di sisi penerima (teruji via klien WS: customer↔admin dua arah)
