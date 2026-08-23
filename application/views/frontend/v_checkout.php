@@ -1,167 +1,166 @@
-<div class="container py-5 mt-5">
-    <div class="mb-5">
-        <h1 class="fw-bold display-5 ls-1">CHECKOUT</h1>
-        <p class="text-muted small text-uppercase ls-2">Enter your information to complete the order</p>
+<div class="container">
+    <div class="page-head">
+        <span class="eyebrow">Checkout</span>
+        <h1 class="page-title mt-2">Selesaikan pesanan</h1>
+    </div>
+
+    <div class="steps mb-5">
+        <span class="step active"><span class="step-dot">1</span> <span class="step-label">Pengiriman</span></span>
+        <span class="step-line"></span>
+        <span class="step active"><span class="step-dot">2</span> <span class="step-label">Pembayaran</span></span>
+        <span class="step-line"></span>
+        <span class="step"><span class="step-dot">3</span> <span class="step-label">Selesai</span></span>
     </div>
 
     <form action="<?= base_url('checkout/proses') ?>" method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
-        <div class="row g-5">
-            <!-- Column 1: Shipping Details -->
+        <div class="row g-5 pb-5">
+            <!-- Kolom 1 -->
             <div class="col-lg-7">
-                <div class="mb-5">
-                    <h5 class="fw-bold text-uppercase ls-2 mb-4 pb-2 border-bottom">1. Shipping Information</h5>
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-uppercase ls-1">Full Name</label>
-                            <input type="text" name="receiver_name" class="form-control-mixtas w-100" placeholder="ENTER YOUR FULL NAME" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-uppercase ls-1">Phone Number</label>
-                            <input type="text" name="phone" class="form-control-mixtas w-100" placeholder="ENTER PHONE NUMBER" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold text-uppercase ls-1">Detailed Address</label>
-                            <textarea name="address" class="form-control-mixtas w-100" rows="3" placeholder="STREET NAME, HOUSE NUMBER, ETC." required></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-uppercase ls-1">Province / State</label>
-                            <input type="text" name="province" class="form-control-mixtas w-100" placeholder="PROVINCE" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-uppercase ls-1">City / District</label>
-                            <input type="text" name="city" class="form-control-mixtas w-100" placeholder="CITY" required>
+                <section class="mb-5">
+                    <span class="eyebrow">Langkah 1 — Informasi pengiriman</span>
+                    <div class="card-soft p-4 p-md-5 mt-3">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="fx-field mb-0">
+                                    <label>Nama lengkap</label>
+                                    <input type="text" name="receiver_name" class="fx-input" placeholder="Nama lengkap Anda" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="fx-field mb-0">
+                                    <label>Nomor telepon</label>
+                                    <input type="text" name="phone" class="fx-input" placeholder="08xx xxxx xxxx" required>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="fx-field mb-0">
+                                    <label>Alamat lengkap</label>
+                                    <textarea name="address" class="fx-input" rows="3" placeholder="Nama jalan, nomor rumah, dll." required></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="fx-field mb-0">
+                                    <label>Provinsi</label>
+                                    <input type="text" name="province" class="fx-input" placeholder="Provinsi" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="fx-field mb-0">
+                                    <label>Kota / Kabupaten</label>
+                                    <input type="text" name="city" class="fx-input" placeholder="Kota" required>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="mb-5">
-                    <h5 class="fw-bold text-uppercase ls-2 mb-4 pb-2 border-bottom">2. Payment Method</h5>
-                    <ul class="nav nav-pills mb-3 gap-2" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active rounded-0 fw-bold ls-1 small px-4" id="tab-online" data-bs-toggle="pill" data-bs-target="#pane-online" type="button" role="tab">
-                                <i class="fas fa-bolt me-2"></i>BAYAR ONLINE
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link rounded-0 fw-bold ls-1 small px-4" id="tab-manual" data-bs-toggle="pill" data-bs-target="#pane-manual" type="button" role="tab">
-                                <i class="fas fa-university me-2"></i>TRANSFER MANUAL
-                            </button>
-                        </li>
-                    </ul>
-                    <div class="tab-content">
-                        <!-- Tab 1: Midtrans Snap -->
-                        <div class="tab-pane fade show active" id="pane-online" role="tabpanel">
-                            <div class="p-4 bg-light border-start border-success border-3">
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="radio" name="payment_method" id="pay_online" value="midtrans" checked>
-                                    <label class="form-check-label fw-bold ls-1" for="pay_online">
-                                        QRIS / VIRTUAL ACCOUNT / E-WALLET / KARTU (MIDTRANS)
-                                    </label>
-                                </div>
-                                <div class="ps-4">
-                                    <p class="small text-muted mb-2">Bayar aman via Midtrans — pilih metode favoritmu di popup pembayaran. Status pesanan diperbarui otomatis setelah pembayaran berhasil.</p>
-                                    <div class="d-flex gap-3 opacity-75">
-                                        <i class="fab fa-cc-visa fs-3"></i>
-                                        <i class="fab fa-cc-mastercard fs-3"></i>
-                                        <i class="fas fa-qrcode fs-3"></i>
-                                        <i class="fas fa-wallet fs-3"></i>
+                <section class="mb-5">
+                    <span class="eyebrow">Langkah 2 — Metode pembayaran</span>
+                    <div class="d-grid gap-3 mt-3">
+                        <label class="pay-opt">
+                            <div class="d-flex align-items-start gap-3">
+                                <input type="radio" name="payment_method" id="pay_online" value="midtrans" checked style="margin-top:4px;">
+                                <div>
+                                    <div class="pay-title"><i class="fas fa-bolt me-2" style="color:var(--accent-warm);"></i>Bayar online — QRIS / Virtual Account / E-Wallet / Kartu</div>
+                                    <div class="pay-desc">Via Midtrans. Status pesanan diperbarui otomatis setelah pembayaran berhasil.</div>
+                                    <div class="d-flex gap-3 mt-3" style="color:var(--muted);">
+                                        <i class="fab fa-cc-visa fs-4"></i>
+                                        <i class="fab fa-cc-mastercard fs-4"></i>
+                                        <i class="fas fa-qrcode fs-4"></i>
+                                        <i class="fas fa-wallet fs-4"></i>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- Tab 2: Transfer manual -->
-                        <div class="tab-pane fade" id="pane-manual" role="tabpanel">
-                            <div class="p-4 bg-light border-start border-dark border-3">
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" value="bank_transfer">
-                                    <label class="form-check-label fw-bold ls-1" for="bank_transfer">
-                                        BANK TRANSFER (MANUAL VERIFICATION)
-                                    </label>
-                                </div>
-                                <div class="ps-4">
-                                    <p class="small text-muted mb-0">Please transfer to our Bank Mandiri account: <strong>123-456-7890 (JiDoor Store)</strong>. You will need to upload proof of payment after checkout.</p>
+                        </label>
+
+                        <label class="pay-opt">
+                            <div class="d-flex align-items-start gap-3">
+                                <input type="radio" name="payment_method" id="bank_transfer" value="bank_transfer" style="margin-top:4px;">
+                                <div>
+                                    <div class="pay-title"><i class="fas fa-building-columns me-2" style="color:var(--accent-warm);"></i>Transfer bank (verifikasi manual)</div>
+                                    <div class="pay-desc">Transfer ke rekening Bank Mandiri <strong>123-456-7890 (JiDoor Store)</strong>. Bukti pembayaran diunggah setelah checkout.</div>
                                 </div>
                             </div>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <span class="eyebrow">Catatan tambahan</span>
+                    <div class="card-soft p-4 p-md-5 mt-3">
+                        <div class="fx-field mb-0">
+                            <label>Catatan untuk penjual (opsional)</label>
+                            <textarea name="note" class="fx-input" rows="2" placeholder="Ada instruksi khusus?"></textarea>
                         </div>
                     </div>
-                </div>
-
-                <div class="mb-5">
-                    <h5 class="fw-bold text-uppercase ls-2 mb-4 pb-2 border-bottom">3. Additional Notes</h5>
-                    <textarea name="note" class="form-control-mixtas w-100" rows="2" placeholder="OPTIONAL: ANY SPECIAL INSTRUCTIONS?"></textarea>
-                </div>
+                </section>
 
                 <?php $has_custom_items = false; ?>
                 <?php foreach ($cart_items as $ci): if (!empty($ci->is_custom)) { $has_custom_items = true; break; } endforeach; ?>
                 <?php if ($has_custom_items): ?>
-                <div class="mb-5">
-                    <h5 class="fw-bold text-uppercase ls-2 mb-4 pb-2 border-bottom">
-                        4. Gambar Referensi Custom
-                        <span class="text-muted small fw-normal text-lowercase ms-2">(jpg/png, maks 2 MB — opsional)</span>
-                    </h5>
+                <section class="mb-5">
+                    <span class="eyebrow">Gambar referensi custom</span>
+                    <p style="color:var(--muted); font-size:.8rem;" class="mt-1 mb-3">jpg/png, maks 2 MB — opsional.</p>
                     <?php foreach ($cart_items as $ci): if (empty($ci->is_custom)) continue; ?>
-                        <div class="p-3 mb-3 bg-light border rounded-3">
-                            <label class="small fw-bold ls-1 d-block mb-2"><?= htmlspecialchars($ci->name) ?></label>
-                            <input type="file" name="custom_image[<?= $ci->id ?>]" accept="image/jpeg,image/png" class="form-control form-control-sm bg-white">
+                        <div class="card-soft p-4 mb-3">
+                            <label class="fw-semibold d-block mb-2" style="font-size:.88rem;"><?= htmlspecialchars($ci->name) ?></label>
+                            <input type="file" name="custom_image[<?= $ci->id ?>]" accept="image/jpeg,image/png" class="fx-input" style="padding:10px 14px;">
                             <?php if (!empty($ci->custom_text)): ?>
-                                <div class="small text-muted fst-italic mt-2"><i class="fas fa-pen-nib me-1"></i>"<?= htmlspecialchars($ci->custom_text) ?>"</div>
+                                <div class="fst-italic mt-2 fx-hint"><i class="fas fa-pen-nib me-1"></i>"<?= htmlspecialchars($ci->custom_text) ?>"</div>
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
-                </div>
+                </section>
                 <?php endif; ?>
             </div>
 
-            <!-- Column 2: Order Summary -->
+            <!-- Kolom 2: Ringkasan -->
             <div class="col-lg-5">
-                <div class="bg-light p-4 p-md-5 sticky-top" style="top: 120px;">
-                    <h5 class="fw-bold text-uppercase ls-2 mb-4">Your Order</h5>
-                    
+                <div class="summary-card card-soft">
+                    <h5 class="fw-semibold mb-4">Pesanan Anda</h5>
+
                     <div class="mb-4">
                         <?php foreach ($cart_items as $item): ?>
-                            <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex justify-content-between align-items-center gap-3 py-2" style="border-bottom:1px dashed var(--line);">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="bg-white border text-center p-1" style="width: 50px; height: 60px;">
-                                        <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/50x60/f5f5f5/000000?text=P' ?>" class="w-100 h-100 object-fit-cover" alt="<?= htmlspecialchars($item->name) ?>">
-                                    </div>
+                                    <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/50x60/f5f5f5/000000?text=P' ?>" alt="" style="width:46px; height:56px; object-fit:cover; border-radius:8px;">
                                     <div>
-                                        <div class="small fw-bold ls-1"><?= htmlspecialchars($item->name) ?></div>
+                                        <div class="fw-semibold" style="font-size:.86rem;"><?= htmlspecialchars($item->name) ?></div>
                                         <?php if ((!empty($item->color) && $item->color !== 'Standar') || (!empty($item->size) && $item->size !== 'Standar')): ?>
-                                            <div class="text-muted" style="font-size: 0.7rem;">
-                                                <?= trim((!empty($item->color) && $item->color !== 'Standar' ? $item->color . ' / ' : '') . (!empty($item->size) && $item->size !== 'Standar' ? $item->size : ''), ' /') ?>
-                                            </div>
+                                            <div class="cart-var"><?= trim((!empty($item->color) && $item->color !== 'Standar' ? htmlspecialchars($item->color) . ' / ' : '') . (!empty($item->size) && $item->size !== 'Standar' ? htmlspecialchars($item->size) : ''), ' /') ?></div>
                                         <?php endif; ?>
-                                        <div class="text-muted" style="font-size: 0.7rem;">Qty: <?= $item->qty ?></div>
+                                        <div class="cart-var">Qty: <?= $item->qty ?></div>
                                     </div>
                                 </div>
-                                <div class="small fw-bold">Rp <?= number_format($item->price * $item->qty, 0, ',', '.') ?></div>
+                                <div class="small fw-semibold tnum text-nowrap">Rp <?= number_format($item->price * $item->qty, 0, ',', '.') ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
 
-                    <div class="border-top pt-4 mb-4">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small ls-1">SUBTOTAL</span>
-                            <span class="small fw-bold">Rp <?= number_format($total_price, 0, ',', '.') ?></span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small ls-1">SHIPPING</span>
-                            <span class="small fw-bold text-success">FREE</span>
-                        </div>
-                        <div class="d-flex justify-content-between mt-4">
-                            <span class="fw-bold text-uppercase ls-2">Total</span>
-                            <span class="fw-800 fs-3">Rp <?= number_format($total_price, 0, ',', '.') ?></span>
-                        </div>
+                    <div class="sum-row">
+                        <span class="lbl">Subtotal</span>
+                        <span class="tnum">Rp <?= number_format($total_price, 0, ',', '.') ?></span>
+                    </div>
+                    <div class="sum-row">
+                        <span class="lbl">Pengiriman</span>
+                        <span style="color:var(--ok); font-weight:600;">Gratis</span>
                     </div>
 
-                    <button type="submit" class="btn btn-dark w-100 py-3 rounded-0 fw-bold ls-1 shadow-lg">
-                        PLACE ORDER NOW
-                    </button>
-                    
-                    <div class="text-center mt-4">
-                        <p class="text-muted small mb-0"><i class="fas fa-lock me-2"></i> Your transaction is encrypted and secure.</p>
+                    <hr style="border-color:var(--line); opacity:1;">
+
+                    <div class="sum-row sum-total">
+                        <span>Total</span>
+                        <span class="tnum">Rp <?= number_format($total_price, 0, ',', '.') ?></span>
                     </div>
+
+                    <button type="submit" class="btn-ink btn-block2 mt-4 mb-3">
+                        Pesan sekarang
+                    </button>
+
+                    <p class="text-center mb-0" style="color:var(--muted); font-size:.78rem;">
+                        <i class="fas fa-lock me-1"></i> Transaksi Anda terenkripsi dan aman.
+                    </p>
                 </div>
             </div>
         </div>

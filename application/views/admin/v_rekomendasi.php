@@ -31,7 +31,7 @@
                 <i class="fa-solid fa-microchip"></i>
             </div>
             <div>
-                <h3 class="fw-bold mb-1">Recommendation Engine</h3>
+                <h3 class="fw-bold mb-1">Mesin Rekomendasi</h3>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="text-muted small">Pure Collaborative Filtering v5.3</span>
                     <span class="badge-neutral"><i class="fa-solid fa-microchip me-1"></i> KNN-OPTIMIZED</span>
@@ -41,17 +41,17 @@
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-admin-outline d-flex align-items-center" onclick="location.reload()">
-                <i class="fa-solid fa-arrows-rotate me-2"></i> Sync Data
+                <i class="fa-solid fa-arrows-rotate me-2"></i> Sinkron Data
             </button>
             <button id="btnRetrain" class="btn btn-admin-primary d-flex align-items-center" onclick="refreshAICache()">
-                <i class="fa-solid fa-brain me-2"></i> Retrain Model
+                <i class="fa-solid fa-brain me-2"></i> Latih Ulang Model
             </button>
         </div>
     </div>
 
     <?php if(!empty($stats->warnings)): ?>
         <div class="info-panel p-warning mb-4 small">
-            <h6 class="fw-bold small mb-2" style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation me-2"></i> System Warnings:</h6>
+            <h6 class="fw-bold small mb-2" style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation me-2"></i> Peringatan Sistem:</h6>
             <ul class="mb-0 ps-3">
                 <?php foreach($stats->warnings as $w): ?>
                     <li><?= $w ?></li>
@@ -66,10 +66,10 @@
     <div class="row g-3 g-md-4 mb-4">
         <?php 
         $matrix = [
-            ['label' => 'Total Users', 'value' => $d->total_users ?? 0, 'icon' => 'fa-users', 'bg' => 'var(--accent-soft)', 'fg' => 'var(--accent)'],
-            ['label' => 'Total Products', 'value' => $d->total_items ?? 0, 'icon' => 'fa-boxes-stacked', 'bg' => 'var(--info-bg)', 'fg' => 'var(--info)'],
-            ['label' => 'Data Signals', 'value' => $d->total_signals ?? 0, 'icon' => 'fa-signal', 'bg' => 'var(--success-bg)', 'fg' => 'var(--success)'],
-            ['label' => 'Data Density', 'value' => ($d->density_score ?? 0) . '%', 'icon' => 'fa-database', 'bg' => '#f5f3ff', 'fg' => '#7c3aed']
+            ['label' => 'Total Pengguna', 'value' => $d->total_users ?? 0, 'icon' => 'fa-users', 'bg' => 'var(--accent-soft)', 'fg' => 'var(--accent)'],
+            ['label' => 'Total Produk', 'value' => $d->total_items ?? 0, 'icon' => 'fa-boxes-stacked', 'bg' => 'var(--info-bg)', 'fg' => 'var(--info)'],
+            ['label' => 'Sinyal Data', 'value' => $d->total_signals ?? 0, 'icon' => 'fa-signal', 'bg' => 'var(--success-bg)', 'fg' => 'var(--success)'],
+            ['label' => 'Kerapatan Data', 'value' => ($d->density_score ?? 0) . '%', 'icon' => 'fa-database', 'bg' => '#f5f3ff', 'fg' => '#7c3aed']
         ];
         foreach ($matrix as $m): ?>
         <div class="col-md-3">
@@ -94,7 +94,7 @@
             <div class="admin-card h-100">
                 <div class="d-flex align-items-center mb-2">
                     <i class="fas fa-bullseye me-2 fs-5" style="color: #e11d48;"></i>
-                    <span class="stat-label">Mean Absolute Error (MAE)</span>
+                    <span class="stat-label">Galat Absolut Rata-rata (MAE)</span>
                 </div>
                 <h2 class="fw-bold mb-0 num" style="font-size: 1.6rem; color: #e11d48;"><?= $d->mae ?? '0.0000' ?></h2>
                 <p class="text-muted small mb-0 mt-1">Rata-rata selisih rating prediksi vs aktual</p>
@@ -104,7 +104,7 @@
             <div class="admin-card h-100">
                 <div class="d-flex align-items-center mb-2">
                     <i class="fas fa-chart-line me-2 fs-5" style="color: #db2777;"></i>
-                    <span class="stat-label">Root Mean Square Error (RMSE)</span>
+                    <span class="stat-label">Akar Galat Kuadrat Rata-rata (RMSE)</span>
                 </div>
                 <h2 class="fw-bold mb-0 num" style="font-size: 1.6rem; color: #db2777;"><?= $d->rmse ?? '0.0000' ?></h2>
                 <p class="text-muted small mb-0 mt-1">Akar rata-rata kuadrat kesalahan (Stabilitas)</p>
@@ -114,7 +114,7 @@
             <div class="admin-card h-100">
                 <div class="d-flex align-items-center mb-2">
                     <i class="fas fa-vial me-2 fs-5" style="color: #7c3aed;"></i>
-                    <span class="stat-label">Evaluation Samples</span>
+                    <span class="stat-label">Sampel Evaluasi</span>
                 </div>
                 <h2 class="fw-bold mb-0 num" style="font-size: 1.6rem; color: #7c3aed;"><?= $d->eval_samples ?? 0 ?></h2>
                 <p class="text-muted small mb-0 mt-1">Jumlah data uji (Time-based Splitting)</p>
@@ -125,7 +125,7 @@
     <div class="info-panel p-info mb-4 small d-flex align-items-start gap-3">
         <i class="fa-solid fa-bolt-lightning mt-1" style="color: var(--info); font-size: 1.1rem;"></i>
         <div>
-            <span class="fw-bold d-block">Engine Optimization Active: Sparse Matrix + KNN + Mean-Centering</span>
+            <span class="fw-bold d-block">Optimasi Mesin Aktif: Matriks Jarang + KNN + Mean-Centering</span>
             <span class="opacity-75">Model sekarang menggunakan normalisasi rata-rata (Mean-Centering) untuk menangani data kosong secara lebih akurat dan pencarian tetangga tercepat menggunakan K-Nearest Neighbors.</span>
         </div>
     </div>
@@ -154,7 +154,7 @@
                         </svg>
                         <div class="position-absolute top-50 start-50 translate-middle text-center">
                             <h1 class="fw-bold mb-0" style="font-size: 3.25rem; letter-spacing: -2px; color: var(--text-1);"><?= $d->final_confidence ?? 0 ?><small class="fs-4 opacity-50" style="letter-spacing: 0;">%</small></h1>
-                            <span class="small fw-bold ls-1" style="font-size: 0.75rem; letter-spacing: 2px; color: var(--success);">OPTIMIZED</span>
+                            <span class="small fw-bold ls-1" style="font-size: 0.75rem; letter-spacing: 2px; color: var(--success);">TEROPTIMASI</span>
                         </div>
                     </div>
                 </div>
@@ -169,7 +169,7 @@
                             </div>
                         </div>
                         <div class="col-6 text-end">
-                            <span class="text-muted d-block" style="font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Coverage</span>
+                            <span class="text-muted d-block" style="font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Cakupan</span>
                             <span class="fw-bold small" style="color: var(--success);"><?= $d->coverage_score ?? 0 ?>%</span>
                             <div class="progress mt-1 ms-auto" style="height: 4px; width: 100%; background: var(--surface-2);">
                                 <div class="progress-bar bg-success" style="width: <?= $d->coverage_score ?? 0 ?>%"></div>
@@ -185,18 +185,18 @@
             <!-- Signal Distribution -->
             <div class="admin-card flex-fill mb-0 d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h6 class="small fw-bold text-uppercase mb-0 ls-1 text-muted">Signal Distribution (Data Sources)</h6>
+                    <h6 class="small fw-bold text-uppercase mb-0 ls-1 text-muted">Distribusi Sinyal (Sumber Data)</h6>
                     <span class="badge-neutral"><?= $d->total_signals ?? 0 ?> total</span>
                 </div>
                 <div class="flex-grow-1 d-flex flex-column justify-content-center">
                     <?php 
                     $source_dist = isset($d->source_distribution) ? (array)$d->source_distribution : [];
                     $signal_colors = [
-                        'explicit' => ['label' => 'Rating (Explicit)', 'color' => '#4f46e5', 'icon' => 'fa-star'],
-                        'purchase' => ['label' => 'Purchase', 'color' => '#059669', 'icon' => 'fa-shopping-bag'],
-                        'wishlist' => ['label' => 'Wishlist', 'color' => '#db2777', 'icon' => 'fa-heart'],
-                        'cart' => ['label' => 'Cart', 'color' => '#0284c7', 'icon' => 'fa-cart-shopping'],
-                        'view' => ['label' => 'Product Views', 'color' => '#7c3aed', 'icon' => 'fa-eye'],
+                        'explicit' => ['label' => 'Rating (Eksplisit)', 'color' => '#4f46e5', 'icon' => 'fa-star'],
+                        'purchase' => ['label' => 'Pembelian', 'color' => '#059669', 'icon' => 'fa-shopping-bag'],
+                        'like'     => ['label' => 'Like', 'color' => '#db2777', 'icon' => 'fa-heart'],
+                        'cart' => ['label' => 'Keranjang', 'color' => '#0284c7', 'icon' => 'fa-cart-shopping'],
+                        'view' => ['label' => 'Kunjungan Produk', 'color' => '#7c3aed', 'icon' => 'fa-eye'],
                     ];
                     $total_signals = array_sum($source_dist) ?: 1;
                     foreach ($signal_colors as $key => $info):
@@ -218,18 +218,18 @@
             
             <!-- Active vs Total -->
             <div class="admin-card flex-fill mb-0">
-                <h6 class="small fw-bold text-uppercase mb-4 ls-1 text-muted">Active Coverage</h6>
+                <h6 class="small fw-bold text-uppercase mb-4 ls-1 text-muted">Cakupan Aktif</h6>
                 <div class="row g-3">
                     <div class="col-6">
                         <div class="p-3 rounded-3" style="background: var(--accent-soft); border: 1px solid var(--accent-ring);">
-                            <span class="text-muted d-block small" style="font-size: 0.68rem; font-weight: 600;">Active Users (in Model)</span>
+                            <span class="text-muted d-block small" style="font-size: 0.68rem; font-weight: 600;">Pengguna Aktif (dalam Model)</span>
                             <span class="fw-bold fs-4" style="color: var(--accent);"><?= $d->active_users ?? 0 ?></span>
                             <span class="text-muted small"> / <?= $d->total_users ?? 0 ?></span>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="p-3 rounded-3" style="background: var(--info-bg); border: 1px solid var(--info-border);">
-                            <span class="text-muted d-block small" style="font-size: 0.68rem; font-weight: 600;">Active Products (in Model)</span>
+                            <span class="text-muted d-block small" style="font-size: 0.68rem; font-weight: 600;">Produk Aktif (dalam Model)</span>
                             <span class="fw-bold fs-4" style="color: var(--info);"><?= $d->active_products ?? 0 ?></span>
                             <span class="text-muted small"> / <?= $d->total_items ?? 0 ?></span>
                         </div>
@@ -244,11 +244,11 @@
     <div class="admin-card mb-4 p-0">
         <div class="p-4 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--border);">
             <div>
-                <h5 class="fw-bold mb-1">Item-Item Cosine Similarity</h5>
+                <h5 class="fw-bold mb-1">Similarity Antar-Produk (Cosine)</h5>
                 <p class="text-muted small mb-0">Top produk yang sering muncul bersamaan dalam perilaku pengguna</p>
             </div>
             <div class="text-end">
-                <span class="text-muted small d-block">Avg Strength</span>
+                <span class="text-muted small d-block">Rata-rata Kekuatan</span>
                 <span class="fw-bold fs-5" style="color: var(--warning);"><?= $d->sim_strength ?? 0 ?>%</span>
             </div>
         </div>
@@ -256,11 +256,11 @@
             <table class="table table-admin table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-4" style="width: 35%;">Product A</th>
+                        <th class="ps-4" style="width: 35%;">Produk A</th>
                         <th class="text-center" style="width: 20%;">Cosine Similarity</th>
-                        <th class="text-center" style="width: 15%;">Co-Occur</th>
-                        <th class="text-center" style="width: 10%;">Penalty</th>
-                        <th class="pe-4 text-end" style="width: 20%;">Product B</th>
+                        <th class="text-center" style="width: 15%;">Muncul Bersama</th>
+                        <th class="text-center" style="width: 10%;">Penalti</th>
+                        <th class="pe-4 text-end" style="width: 20%;">Produk B</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -319,10 +319,10 @@
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-sm btn-admin-outline rounded-pill px-3" onclick="runKFoldValidation()">
-                <i class="fas fa-vial me-1"></i> Run K-Fold CV
+                <i class="fas fa-vial me-1"></i> Jalankan K-Fold CV
             </button>
             <button class="btn btn-sm btn-admin-primary rounded-pill px-3" onclick="runKOptimization()">
-                <i class="fas fa-chart-line me-1"></i> Optimize K
+                <i class="fas fa-chart-line me-1"></i> Optimasi K
             </button>
         </div>
     </div>
@@ -331,10 +331,10 @@
         <!-- K-Optimization Chart -->
         <div class="col-lg-8">
             <div class="admin-card h-100" id="kOptContainer">
-                <h6 class="small fw-bold text-uppercase mb-4 ls-1 text-muted">K-Optimization Graph (K vs RMSE)</h6>
+                <h6 class="small fw-bold text-uppercase mb-4 ls-1 text-muted">Grafik Optimasi K (K vs RMSE)</h6>
                 <div style="height: 300px; width: 100%;" class="d-flex align-items-center justify-content-center rounded-3 info-panel">
                     <canvas id="kOptChart"></canvas>
-                    <div id="kOptPlaceholder" class="text-muted small opacity-75 px-3 text-center">Klik "Optimize K" untuk memulai simulasi perbandingan nilai K.</div>
+                    <div id="kOptPlaceholder" class="text-muted small opacity-75 px-3 text-center">Klik "Optimasi K" untuk memulai simulasi perbandingan nilai K.</div>
                 </div>
             </div>
         </div>
@@ -363,7 +363,7 @@
             <select id="cfDetailUserSelect" class="form-select form-control-admin form-select-sm" style="width: 220px;">
                 <?php if (!empty($user_list)): ?>
                     <?php foreach ($user_list as $u): ?>
-                        <option value="<?= $u->id ?>">User #<?= $u->id ?> — <?= htmlspecialchars($u->username) ?></option>
+                        <option value="<?= $u->id ?>">Pengguna #<?= $u->id ?> — <?= htmlspecialchars($u->username) ?></option>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </select>
@@ -385,14 +385,14 @@
         icon.classList.add('fa-spin');
         fetch('http://127.0.0.1:8000/cache/refresh', { method: 'POST' })
             .then(res => res.json())
-            .then(data => { showToast('Success: ' + data.message, 'success'); setTimeout(() => location.reload(), 800); })
-            .catch(err => { showToast('Error refreshing cache.', 'error'); btn.classList.remove('disabled'); icon.classList.remove('fa-spin'); });
+            .then(data => { showToast("Berhasil: " + data.message, "success"); setTimeout(() => location.reload(), 800); })
+            .catch(err => { showToast('Gagal menyegarkan cache.', 'error'); btn.classList.remove('disabled'); icon.classList.remove('fa-spin'); });
     }
 
     async function loadCFDetail() {
         const userId = document.getElementById('cfDetailUserSelect').value;
         const container = document.getElementById('cfDetailContainer');
-        container.innerHTML = '<div class="text-center py-5 text-muted small"><div class="spinner-border spinner-border-sm me-2"></div>Menghitung CF untuk User #' + userId + '...</div>';
+        container.innerHTML = '<div class="text-center py-5 text-muted small"><div class="spinner-border spinner-border-sm me-2"></div>Menghitung CF untuk Pengguna #' + userId + '...</div>';
 
         try {
             const res = await fetch(`http://127.0.0.1:8000/admin/cf-detail/${userId}`);
@@ -454,7 +454,7 @@
                                 let bg2 = '#94a3b8';
                                 if (val === 'explicit') bg2 = '#4f46e5';
                                 else if (val === 'purchase') bg2 = '#059669';
-                                else if (val === 'wishlist') bg2 = '#db2777';
+                                else if (val === 'like') bg2 = '#db2777';
                                 else if (val === 'cart') bg2 = '#0284c7';
                                 else if (val === 'view') bg2 = '#7c3aed';
                                 val = `<span class="badge rounded-pill px-2 py-1" style="background:${bg2};font-size:0.6rem;color:#fff;">${val}</span>`;
@@ -503,7 +503,7 @@
                         labels: labels,
                         datasets: [
                             {
-                                label: 'RMSE (Lower is Better)',
+                                label: 'RMSE (makin kecil makin baik)',
                                 data: rmseData,
                                 borderColor: '#4f46e5',
                                 backgroundColor: 'rgba(79, 70, 229, 0.06)',
@@ -556,7 +556,7 @@
                 container.innerHTML = `
                     <div class="info-panel">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small">Mean MAE</span>
+                            <span class="text-muted small">MAE Rata-rata</span>
                             <span class="fw-bold" style="color: var(--info);">${m.mae_mean}</span>
                         </div>
                         <div class="progress" style="height: 4px; background: var(--border);">
@@ -565,7 +565,7 @@
                     </div>
                     <div class="info-panel">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small">Mean RMSE</span>
+                            <span class="text-muted small">RMSE Rata-rata</span>
                             <span class="fw-bold" style="color: var(--warning);">${m.rmse_mean}</span>
                         </div>
                         <div class="progress" style="height: 4px; background: var(--border);">
@@ -575,19 +575,19 @@
                     <div class="mt-2 row g-2">
                         <div class="col-6">
                             <div class="p-2 rounded-3 text-center" style="background: var(--surface-2);">
-                                <span class="text-muted d-block" style="font-size:0.62rem;">MAE Std Dev</span>
+                                <span class="text-muted d-block" style="font-size:0.62rem;">Std Dev MAE</span>
                                 <span class="small fw-bold">±${m.mae_std}</span>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="p-2 rounded-3 text-center" style="background: var(--surface-2);">
-                                <span class="text-muted d-block" style="font-size:0.62rem;">RMSE Std Dev</span>
+                                <span class="text-muted d-block" style="font-size:0.62rem;">Std Dev RMSE</span>
                                 <span class="small fw-bold">±${m.rmse_std}</span>
                             </div>
                         </div>
                     </div>
                     <div class="alert alert-success small p-2 mt-2 mb-0" style="font-size:0.68rem;border-radius:10px;background:var(--success-bg);border-color:var(--success-border);color:var(--success);">
-                        <i class="fas fa-check-circle me-1"></i> Validated on ${m.folds} Folds successfully.
+                        <i class="fas fa-check-circle me-1"></i> Validasi berhasil pada ${m.folds} fold.
                     </div>
                 `;
             } else {

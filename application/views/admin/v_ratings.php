@@ -7,7 +7,7 @@
         <p class="page-sub">Moderasi ulasan yang ditampilkan pada halaman produk.</p>
     </div>
     <span class="badge-neutral" style="font-size: 0.8rem; padding: 8px 16px;">
-        Total: <?= $this->M_rating->count_all($selected_rating) ?> Reviews
+        Total: <?= $this->M_rating->count_all($selected_rating) ?> Ulasan
     </span>
 </div>
 
@@ -42,7 +42,7 @@
             <thead>
                 <tr>
                     <th class="ps-4">ID</th>
-                    <th>Customer</th>
+                    <th>Pelanggan</th>
                     <th>Detail Produk</th>
                     <th class="text-center">Rating</th>
                     <th>Komentar Review</th>
@@ -65,7 +65,7 @@
                     </td>
                     <td>
                         <div class="fw-semibold mb-1" style="font-size: 0.85rem;"><?= htmlspecialchars($r->product_name) ?></div>
-                        <span class="badge-neutral" style="font-size: 0.65rem;">Product ID: #<?= $r->product_id ?></span>
+                        <span class="badge-neutral" style="font-size: 0.65rem;">ID Produk: #<?= $r->product_id ?></span>
                     </td>
                     <td class="text-center">
                         <div class="d-flex flex-column align-items-center gap-1">

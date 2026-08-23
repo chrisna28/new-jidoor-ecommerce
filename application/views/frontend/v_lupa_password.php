@@ -1,37 +1,63 @@
-<div class="auth-wrapper">
-    <!-- Left Side: Minimalist Image -->
-    <div class="auth-image d-none d-lg-flex" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1510074377623-8cf13fb86c08?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');">
-        <div>
-            <span class="text-uppercase ls-2 small mb-3 d-block">Premium Collection</span>
-            <h1 class="display-3 fw-bold mb-4">Timeless<br>Elegance.</h1>
-            <p class="fs-5 opacity-75 mb-5 px-5">Experience the ultimate combination of security and minimalist design.</p>
-            <a href="<?= base_url() ?>" class="btn-discovery px-5">Explore More</a>
-        </div>
-    </div>
+<div class="a2-shell">
+    <!-- Panel editorial -->
+    <aside class="a2-panel d-none d-lg-flex">
+        <div class="a2-photo" style="background-image: url('https://images.unsplash.com/photo-1510074377623-8cf13fb86c08?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');"></div>
+        <div class="a2-scrim"></div>
+        <div class="a2-grain"></div>
 
-    <!-- Right Side: Form -->
-    <div class="auth-form-container bg-white">
-        <div class="w-100" style="max-width: 450px; margin: 0 auto;">
-            <div class="mb-5">
-                <h2 class="fw-bold mb-2 ls-1" style="font-size: 2.5rem;">LUPA PASSWORD</h2>
-                <p class="text-muted small ls-1">MASUKKAN EMAIL AKUN ANDA. KAMI AKAN MENGIRIMKAN TAUTAN RESET.</p>
+        <a href="<?= base_url() ?>" class="a2-brand">
+            <i class="fa-solid fa-door-open"></i> JiDoor
+        </a>
+
+        <div class="a2-panel-body">
+            <span class="a2-eyebrow">JiDoor Store</span>
+            <h1 class="a2-display">Dijahit untuk dipakai,<br><em>dibuat untuk bertahan.</em></h1>
+            <p class="a2-lede">Busana kelas seragam dari bahan terbaik &mdash; tangguh untuk bekerja, nyaman dipakai di mana saja.</p>
+            <a href="<?= base_url('katalog') ?>" class="a2-panel-link">Jelajahi koleksi <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </aside>
+
+    <!-- Kolom formulir -->
+    <main class="a2-main">
+        <div class="a2-card">
+            <div class="a2-topbar">
+                <a href="<?= base_url() ?>" class="a2-back"><i class="fa-solid fa-arrow-left"></i> Kembali ke toko</a>
+                <a href="<?= base_url() ?>" class="a2-brand a2-brand-sm d-lg-none"><i class="fa-solid fa-door-open"></i> JiDoor</a>
             </div>
 
-            <form action="<?= base_url('lupa-password') ?>" method="post">
+            <header class="a2-head a2-rise">
+                <h1>Atur ulang <em>kata sandi</em> Anda.</h1>
+                <p>Masukkan email akun Anda dan kami akan mengirimkan tautan reset.</p>
+            </header>
+
+            <form action="<?= base_url('lupa-password') ?>" method="post" class="a2-form" data-auth-form>
                 <?= csrf_field() ?>
-                <div class="mb-4">
-                    <label class="small fw-bold text-uppercase ls-1">Email</label>
-                    <input type="email" name="email" class="form-control-mixtas w-100" placeholder="ENTER YOUR EMAIL" required autofocus>
+                <div class="a2-field a2-rise">
+                    <label for="email">Email</label>
+                    <div class="a2-control">
+                        <input type="email" id="email" name="email" class="a2-input" placeholder="anda@contoh.com" autocomplete="email" required autofocus>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-dark w-100 py-3 rounded-0 fw-bold ls-1 mb-4">
-                    KIRIM TAUTAN RESET
+                <button type="submit" class="a2-btn a2-rise" data-auth-btn>
+                    <span>Kirim Tautan Reset</span><i class="fa-solid fa-arrow-right"></i>
                 </button>
-
-                <div class="text-center">
-                    <p class="text-muted small ls-1">INGAT PASSWORD? <a href="<?= base_url('login') ?>" class="text-dark fw-bold text-decoration-none">BACK TO LOGIN</a></p>
-                </div>
             </form>
+
+            <p class="a2-alt a2-rise">Sudah ingat? <a href="<?= base_url('login') ?>">Kembali ke halaman masuk</a></p>
         </div>
-    </div>
+    </main>
 </div>
+
+<script>
+document.querySelectorAll('[data-auth-form]').forEach(function (form) {
+    form.addEventListener('submit', function () {
+        var btn = form.querySelector('[data-auth-btn]');
+        if (!btn || btn.dataset.loading) { return; }
+        btn.dataset.loading = '1';
+        btn.disabled = true;
+        var label = btn.querySelector('span');
+        if (label) { label.textContent = 'Mohon tunggu'; }
+    });
+});
+</script>

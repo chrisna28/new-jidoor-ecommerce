@@ -257,7 +257,7 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
         user_signals['rating'] = user_signals['rating'].round(2)
         result["steps"]["1_raw_signals"] = {
             "title": "Step 1: Raw Signals (Data Interaksi User)",
-            "description": "Data mentah dari tabel ratings, orders, cart, wishlist, dan product_views setelah pembobotan dan time decay.",
+            "description": "Data mentah dari tabel ratings, orders, cart, likes, dan product_views setelah pembobotan dan time decay.",
             "total_signals": len(user_signals),
             "data": user_signals.to_dict(orient='records')
         }

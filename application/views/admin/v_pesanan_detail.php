@@ -119,7 +119,7 @@
                 $statusColor = ['pending'=>'var(--warning)','paid'=>'var(--success)','processed'=>'var(--info)','shipped'=>'var(--info)','delivered'=>'var(--success)','rejected'=>'var(--danger)','cancelled'=>'var(--danger)'][$order->status] ?? 'var(--text-1)';
             ?>
             <div class="info-panel <?= $panelMap[$order->status] ?? '' ?> mb-4 text-center py-4">
-                <h4 class="fw-bold mb-1 text-uppercase ls-2" style="color: <?= $statusColor ?>;"><?= ucfirst($order->status) ?></h4>
+                <h4 class="fw-bold mb-1 text-uppercase ls-2" style="color: <?= $statusColor ?>;"><?= status_label_id($order->status) ?></h4>
                 <small class="opacity-75"><?= date('d M Y, H:i', strtotime($order->created_at)) ?></small>
             </div>
 
@@ -176,7 +176,7 @@
                             <label class="small d-block mb-1" style="color: var(--text-2); font-weight: 600;">Status Baru</label>
                             <select name="status" id="statusSelect" class="form-select form-control-admin" required>
                                 <?php if ($order->status === 'pending'): ?>
-                                    <option value="paid">Verifikasi Pembayaran (Paid)</option>
+                                    <option value="paid">Verifikasi Pembayaran (Terbayar)</option>
                                     <option value="rejected">Tolak Pembayaran</option>
                                     <option value="cancelled">Batalkan Pesanan</option>
                                 <?php elseif ($order->status === 'paid'): ?>

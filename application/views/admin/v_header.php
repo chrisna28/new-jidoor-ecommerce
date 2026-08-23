@@ -15,6 +15,7 @@ $page_title = isset($title) ? $title : 'Dashboard';
     <title><?= $page_title ?> - JiDoor Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/images/favicon.svg') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/admin.css?v=2.8') ?>">
 </head>
 <body>
@@ -35,7 +36,7 @@ $page_title = isset($title) ? $title : 'Dashboard';
                 <span class="badge rounded-pill bg-danger"><?= $unread_chat ?></span>
             <?php endif; ?>
         </a>
-        <a href="<?= site_url('admin/ratings') ?>" class="nav-item-admin <?= (strpos(current_url(), 'ratings') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-star"></i> Ratings</a>
+        <a href="<?= site_url('admin/ratings') ?>" class="nav-item-admin <?= (strpos(current_url(), 'ratings') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-star"></i> Ulasan</a>
         <a href="<?= site_url('admin/users') ?>" class="nav-item-admin <?= (strpos(current_url(), 'users') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-users"></i> Pengguna</a>
         <a href="<?= site_url('admin/rekomendasi') ?>" class="nav-item-admin <?= (strpos(current_url(), 'rekomendasi') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-wand-magic-sparkles"></i> Rekomendasi AI</a>
     </nav>
@@ -57,7 +58,7 @@ $page_title = isset($title) ? $title : 'Dashboard';
             <span class="crumb-current"><?= $page_title ?></span>
         </nav>
         <div class="topbar-right">
-            <span class="topbar-date"><i class="fa-regular fa-calendar"></i> <?= date('D, d M Y') ?></span>
+            <span class="topbar-date"><i class="fa-regular fa-calendar"></i> <?= tanggal_indo() ?></span>
             <div class="dropdown profile-menu">
                 <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="avatar-circle"><?= strtoupper(substr($username, 0, 1)) ?></span>
@@ -75,7 +76,7 @@ $page_title = isset($title) ? $title : 'Dashboard';
         </div>
     </header>
 
-    <form id="logoutForm" action="<?= site_url('auth/logout') ?>" method="post" class="d-none"></form>
+    <form id="logoutForm" action="<?= site_url('auth/logout') ?>" method="post" class="d-none"><?= csrf_field() ?></form>
 
     <div class="admin-page">
 

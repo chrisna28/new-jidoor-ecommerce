@@ -4,7 +4,7 @@
 </div>
 
 <div class="filter-pills mb-4">
-    <?php $filters=[null=>'Semua','pending'=>'Pending','paid'=>'Paid','processed'=>'Processed','shipped'=>'Shipped','rejected'=>'Rejected','cancelled'=>'Cancelled']; ?>
+    <?php $filters=[null=>'Semua','pending'=>status_label_id('pending'),'paid'=>status_label_id('paid'),'processed'=>status_label_id('processed'),'shipped'=>status_label_id('shipped'),'rejected'=>status_label_id('rejected'),'cancelled'=>status_label_id('cancelled')]; ?>
     <?php foreach ($filters as $val=>$label): ?>
         <a href="<?= base_url('admin/pesanan' . ($val ? '?status='.$val : '')) ?>" class="filter-pill <?= $filter === $val ? 'active' : '' ?>"><?= $label ?></a>
     <?php endforeach ?>
@@ -15,7 +15,7 @@
         <table class="table table-admin mb-0">
             <thead>
                 <tr>
-                    <th class="ps-4">Order ID</th>
+                    <th class="ps-4">No. Pesanan</th>
                     <th>Pelanggan</th>
                     <th>Waktu Pesanan</th>
                     <th>Total Bayar</th>
@@ -46,7 +46,7 @@
                         <?php 
                             $badge = ['pending'=>'badge-pending','paid'=>'badge-paid','processed'=>'badge-processed','shipped'=>'badge-shipped','rejected'=>'badge-rejected','cancelled'=>'badge-cancelled'][$o->status] ?? 'badge-neutral'; 
                         ?>
-                        <span class="admin-badge <?= $badge ?>"><?= $o->status ?></span>
+                        <span class="admin-badge <?= $badge ?>"><?= status_label_id($o->status) ?></span>
                     </td>
                     <td>
                         <?php if ($o->payment_proof): ?>

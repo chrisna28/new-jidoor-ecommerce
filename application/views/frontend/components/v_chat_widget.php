@@ -4,42 +4,42 @@
 // Konteks produk ala Shopee: halaman detail memanggil window.setChatProduct({...}).
 if (empty($chat_user_id)) { return; } // tamu tidak melihat widget
 ?>
-<button type="button" id="chatFab" class="btn btn-dark rounded-circle shadow-lg"
-        style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; z-index: 1050; display: flex; align-items: center; justify-content: center;">
+<button type="button" id="chatFab" class="btn-ink rounded-circle"
+        style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; z-index: 1050; display: flex; align-items: center; justify-content: center; padding: 0;">
     <i class="fas fa-comment-dots fs-4"></i>
 </button>
 
-<div id="chatPanel" class="bg-white shadow-lg border" style="position: fixed; right: 24px; bottom: 92px; width: 340px; max-width: calc(100vw - 48px); height: 480px; max-height: 75vh; z-index: 1050; border-radius: 16px; display: none; flex-direction: column; overflow: hidden;">
-    <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+<div id="chatPanel" style="position: fixed; right: 24px; bottom: 92px; width: 340px; max-width: calc(100vw - 48px); height: 480px; max-height: 75vh; z-index: 1050; border-radius: var(--r-md); display: none; flex-direction: column; overflow: hidden; background:#fff; border:1px solid var(--line); box-shadow: var(--sh-lift);">
+    <div class="p-3 d-flex justify-content-between align-items-center" style="background:var(--paper); border-bottom:1px solid var(--line);">
         <div>
-            <div class="fw-bold ls-1 small">CHAT ADMIN JIDOOR</div>
-            <div class="text-white-50" style="font-size: 0.7rem;" id="chatStatus">Menghubungkan...</div>
+            <div class="fw-semibold small">CHAT ADMIN JIDOOR</div>
+            <div style="font-size: 0.7rem;" id="chatStatus">Menghubungkan...</div>
         </div>
-        <button type="button" class="btn btn-link text-white p-0" onclick="toggleChat(false)"><i class="fas fa-times"></i></button>
+        <button type="button" class="btn btn-link p-0" style="color:var(--muted);" onclick="toggleChat(false)"><i class="fas fa-times"></i></button>
     </div>
 
-    <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto bg-light" style="font-size: 0.85rem;"></div>
+    <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto" style="font-size: 0.85rem; background:#f4f1ec;"></div>
 
     <!-- Chip pertanyaan cepat ala Shopee (muncul saat konteks produk aktif) -->
-    <div id="chatChips" class="d-none px-2 pt-2 bg-white d-flex flex-wrap gap-1" style="border-top: 1px solid rgba(0,0,0,.06);">
-        <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1" style="font-size:.72rem" data-q="Ready stok?">Ready?</button>
-        <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1" style="font-size:.72rem" data-q="Bisa custom?">Bisa custom?</button>
-        <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1" style="font-size:.72rem" data-q="Estimasi kirim berapa hari?">Estimasi kirim?</button>
+    <div id="chatChips" class="d-none px-2 pt-2 d-flex flex-wrap gap-1 bg-white" style="border-top: 1px solid var(--line);">
+        <button type="button" class="chip-f" style="font-size:.72rem; padding:6px 14px;" data-q="Ready stok?">Ready stok?</button>
+        <button type="button" class="chip-f" style="font-size:.72rem; padding:6px 14px;" data-q="Bisa custom?">Bisa custom?</button>
+        <button type="button" class="chip-f" style="font-size:.72rem; padding:6px 14px;" data-q="Estimasi kirim berapa hari?">Estimasi kirim?</button>
     </div>
 
     <!-- Bar konteks produk ala Shopee -->
-    <div id="chatContext" class="d-none align-items-center gap-2 px-2 py-2 bg-white" style="border-top: 1px solid rgba(0,0,0,.08);">
-        <img id="ctxImg" src="" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;background:#f1f3f5;">
+    <div id="chatContext" class="d-none align-items-center gap-2 px-2 py-2 bg-white" style="border-top: 1px solid var(--line);">
+        <img id="ctxImg" src="" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;background:var(--paper);">
         <div class="flex-grow-1 overflow-hidden">
-            <div id="ctxName" class="text-truncate fw-bold" style="font-size:.75rem;"></div>
-            <div id="ctxPrice" class="fw-bold" style="font-size:.72rem;color:#ee4d2d;"></div>
+            <div id="ctxName" class="text-truncate fw-semibold" style="font-size:.75rem;"></div>
+            <div id="ctxPrice" class="fw-semibold tnum" style="font-size:.72rem;color:var(--accent-warm);"></div>
         </div>
-        <button type="button" id="ctxClose" class="btn btn-link text-muted p-1" title="Lepas konteks produk"><i class="fas fa-times small"></i></button>
+        <button type="button" id="ctxClose" class="btn btn-link p-1" style="color:var(--muted);" title="Lepas konteks produk"><i class="fas fa-times small"></i></button>
     </div>
 
-    <form id="chatForm" class="p-2 border-top d-flex gap-2 bg-white">
-        <input type="text" id="chatInput" class="form-control form-control-sm border-0 bg-light rounded-pill px-3" placeholder="Tulis pesan..." maxlength="1000" autocomplete="off">
-        <button type="submit" class="btn btn-dark btn-sm rounded-circle px-3"><i class="fas fa-paper-plane"></i></button>
+    <form id="chatForm" class="p-2 d-flex gap-2 bg-white" style="border-top: 1px solid var(--line);">
+        <input type="text" id="chatInput" class="fx-input" style="border-radius:999px; padding:9px 16px; font-size:.85rem;" placeholder="Tulis pesan..." maxlength="1000" autocomplete="off">
+        <button type="submit" class="btn-ink flex-shrink-0" style="border-radius:50%; width:42px; height:42px; padding:0;"><i class="fas fa-paper-plane" style="font-size:.85rem;"></i></button>
     </form>
 </div>
 
@@ -155,7 +155,7 @@ if (empty($chat_user_id)) { return; } // tamu tidak melihat widget
         ws.onopen = () => {
             ws.send(JSON.stringify({ type: 'auth', token: CHAT_TOKEN, user_id: CHAT_USER_ID, role: CHAT_ROLE }));
             wsOnline = true;
-            statusEl.innerHTML = '<span class="text-success">● Admin online</span>';
+            statusEl.innerHTML = '<span class="text-success">● Admin sedang online</span>';
         };
 
         ws.onmessage = (e) => {

@@ -34,7 +34,7 @@ $has_thread = !empty($conv);
                    class="conv-item <?= $isActive ? 'active' : '' ?> <?= $c->unread_admin > 0 ? 'unread' : '' ?>">
                     <span class="avatar-circle avatar-customer avatar-sm"><?= strtoupper(substr($c->username ?: 'U', 0, 1)) ?></span>
                     <span class="conv-body">
-                        <span class="conv-name"><?= htmlspecialchars($c->username ?: 'User #' . $c->user_id) ?></span>
+                        <span class="conv-name"><?= htmlspecialchars($c->username ?: 'Pengguna #' . $c->user_id) ?></span>
                         <span class="conv-snippet">
                             <?php if ($c->last_product_id): ?><i class="fas fa-box-open conv-prod-icon"></i><?php endif ?>
                             <?= $c->last_text !== null ? htmlspecialchars(mb_strimwidth($c->last_text, 0, 42, '…')) : 'Belum ada pesan' ?>
@@ -60,7 +60,7 @@ $has_thread = !empty($conv);
             <a href="<?= base_url('admin/chat') ?>" class="btn btn-sm btn-admin-outline d-lg-none" title="Kembali ke daftar"><i class="fas fa-arrow-left"></i></a>
             <span class="avatar-circle avatar-customer avatar-sm"><?= strtoupper(substr($conv->username ?: 'U', 0, 1)) ?></span>
             <div class="min-w-0">
-                <div class="fw-bold text-truncate" style="font-size:.95rem;"><?= htmlspecialchars($conv->username ?: 'User #' . $conv->user_id) ?></div>
+                <div class="fw-bold text-truncate" style="font-size:.95rem;"><?= htmlspecialchars($conv->username ?: 'Pengguna #' . $conv->user_id) ?></div>
                 <small class="text-success"><span class="ai-pulse">●</span> Percakapan aktif</small>
             </div>
         </div>
@@ -95,7 +95,7 @@ $has_thread = !empty($conv);
         <div class="chat-composer">
             <!-- Chip balasan cepat ala Shopee -->
             <div class="d-flex flex-wrap gap-1 mb-2">
-                <button type="button" class="btn btn-sm btn-admin-outline rounded-pill px-3 py-1" style="font-size:.72rem" data-q="Ready">Ready</button>
+                <button type="button" class="btn btn-sm btn-admin-outline rounded-pill px-3 py-1" style="font-size:.72rem" data-q="Stok ready?">Stok ready?</button>
                 <button type="button" class="btn btn-sm btn-admin-outline rounded-pill px-3 py-1" style="font-size:.72rem" data-q="Bisa custom">Bisa custom</button>
                 <button type="button" class="btn btn-sm btn-admin-outline rounded-pill px-3 py-1" style="font-size:.72rem" data-q="Estimasi kirim 2-3 hari">Estimasi kirim 2-3 hari</button>
                 <button type="button" class="btn btn-sm btn-admin-outline rounded-pill px-3 py-1" style="font-size:.72rem" data-q="Terima kasih sudah bertanya!">Terima kasih</button>

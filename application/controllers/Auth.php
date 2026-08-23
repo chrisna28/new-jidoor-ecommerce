@@ -22,7 +22,7 @@ class Auth extends CI_Controller {
             $role = $this->session->userdata('role');
             redirect($role === 'admin' ? 'admin' : '/');
         }
-        $data['title'] = 'Login — JiDoor Store';
+        $data['title'] = 'Masuk — JiDoor Store';
         $this->load->view('frontend/v_header', $data);
         $this->load->view('frontend/v_login', $data);
         $this->load->view('frontend/v_footer', $data);
@@ -217,7 +217,7 @@ class Auth extends CI_Controller {
             redirect('reset-password/' . $token);
         }
 
-        $data['title']  = 'Reset Password — JiDoor Store';
+        $data['title']  = 'Atur Ulang Password — JiDoor Store';
         $data['token']  = $token;
         $data['masked_email'] = $this->_mask_email($row->email);
         $this->load->view('frontend/v_header', $data);
@@ -240,7 +240,7 @@ class Auth extends CI_Controller {
             $this->load->library('email', $config);
             $this->email->from($config['smtp_user'], 'JiDoor Store');
             $this->email->to($to_email);
-            $this->email->subject('Reset Password — JiDoor Store');
+            $this->email->subject('Atur Ulang Password — JiDoor Store');
             $this->email->message(
                 '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;">' .
                 '<h2 style="color:#111;">Hai ' . htmlspecialchars($username) . ',</h2>' .
@@ -248,7 +248,7 @@ class Auth extends CI_Controller {
                 '<p style="text-align:center;margin:32px 0;">' .
                 '<a href="' . $link . '" style="background:#111;color:#fff;padding:14px 36px;' .
                 'text-decoration:none;font-weight:bold;border-radius:4px;display:inline-block;">' .
-                'RESET PASSWORD</a></p>' .
+                'ATUR ULANG PASSWORD</a></p>' .
                 '<p>Atau salin tautan berikut ke browser:<br>' .
                 '<a href="' . $link . '">' . $link . '</a></p>' .
                 '<p style="color:#888;font-size:12px;">Tautan berlaku 60 menit dan hanya dapat ' .

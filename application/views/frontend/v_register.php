@@ -1,64 +1,106 @@
-<div class="auth-wrapper flex-row-reverse">
-    <!-- Right Side: Image -->
-    <div class="auth-image d-none d-lg-flex" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1506377295352-e3154d43ea9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');">
-        <div>
-            <span class="text-uppercase ls-2 small mb-3 d-block">Join the Community</span>
-            <h1 class="display-3 fw-bold mb-4">Create Your<br>Account.</h1>
-            <p class="fs-5 opacity-75 mb-5 px-5">Join JiDoor to get exclusive updates and personalized door recommendations.</p>
-        </div>
-    </div>
+<div class="a2-shell a2-shell-flip">
+    <!-- Panel editorial (kanan) -->
+    <aside class="a2-panel d-none d-lg-flex">
+        <div class="a2-photo" style="background-image: url('https://images.unsplash.com/photo-1506377295352-e3154d43ea9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');"></div>
+        <div class="a2-scrim"></div>
+        <div class="a2-grain"></div>
 
-    <!-- Left Side: Form -->
-    <div class="auth-form-container bg-white">
-        <div class="w-100" style="max-width: 500px; margin: 0 auto;">
-            <div class="mb-5">
-                <h2 class="fw-bold mb-2 ls-1" style="font-size: 2.5rem;">REGISTER</h2>
-                <p class="text-muted small ls-1">PLEASE FILL IN YOUR INFORMATION BELOW.</p>
+        <a href="<?= base_url() ?>" class="a2-brand">
+            <i class="fa-solid fa-door-open"></i> JiDoor
+        </a>
+
+        <div class="a2-panel-body">
+            <span class="a2-eyebrow">JiDoor Store</span>
+            <h1 class="a2-display">Satu akun,<br><em>semua pesanan.</em></h1>
+            <p class="a2-lede">Lacak pengiriman, simpan produk favorit, dan checkout lebih cepat di kunjungan berikutnya.</p>
+        </div>
+    </aside>
+
+    <!-- Kolom formulir -->
+    <main class="a2-main">
+        <div class="a2-card">
+            <div class="a2-topbar">
+                <a href="<?= base_url() ?>" class="a2-back"><i class="fa-solid fa-arrow-left"></i> Kembali ke toko</a>
+                <a href="<?= base_url() ?>" class="a2-brand a2-brand-sm d-lg-none"><i class="fa-solid fa-door-open"></i> JiDoor</a>
             </div>
 
-            <form action="<?= base_url('auth/register_aksi') ?>" method="post">
+            <header class="a2-head a2-rise">
+                <h1>Buat <em>akun</em> Anda.</h1>
+                <p>Cukup semenit saja.</p>
+            </header>
+
+            <form action="<?= base_url('auth/register_aksi') ?>" method="post" class="a2-form" data-auth-form>
                 <?= csrf_field() ?>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label class="small fw-bold text-uppercase ls-1">Username</label>
-                            <input type="text" name="username" class="form-control-mixtas w-100" placeholder="USERNAME" required>
+                <div class="a2-row">
+                    <div class="a2-field a2-rise">
+                        <label for="username">Nama pengguna</label>
+                        <div class="a2-control">
+                            <input type="text" id="username" name="username" class="a2-input" placeholder="nama pengguna Anda" autocomplete="username" required>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label class="small fw-bold text-uppercase ls-1">Email</label>
-                            <input type="email" name="email" class="form-control-mixtas w-100" placeholder="EMAIL ADDRESS" required>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="mb-4">
-                            <label class="small fw-bold text-uppercase ls-1">Password</label>
-                            <input type="password" name="password" class="form-control-mixtas w-100" placeholder="CHOOSE A PASSWORD" required>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="mb-4">
-                            <label class="small fw-bold text-uppercase ls-1">Confirm Password</label>
-                            <input type="password" name="confirm_password" class="form-control-mixtas w-100" placeholder="REPEAT YOUR PASSWORD" required>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="mb-5">
-                            <label class="small fw-bold text-uppercase ls-1">Phone Number</label>
-                            <input type="text" name="phone" class="form-control-mixtas w-100" placeholder="YOUR PHONE NUMBER">
+                    <div class="a2-field a2-rise">
+                        <label for="email">Email</label>
+                        <div class="a2-control">
+                            <input type="email" id="email" name="email" class="a2-input" placeholder="anda@contoh.com" autocomplete="email" required>
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-dark w-100 py-3 rounded-0 fw-bold ls-1 mb-4">
-                    REGISTER NOW
+                <div class="a2-field a2-rise">
+                    <label for="password">Kata sandi</label>
+                    <div class="a2-control a2-pass">
+                        <input type="password" id="password" name="password" class="a2-input" placeholder="minimal 6 karakter" autocomplete="new-password" minlength="6" required>
+                        <button type="button" class="a2-eye" data-toggle-pass="#password" aria-label="Tampilkan kata sandi">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="a2-field a2-rise">
+                    <label for="confirm_password">Konfirmasi kata sandi</label>
+                    <div class="a2-control a2-pass">
+                        <input type="password" id="confirm_password" name="confirm_password" class="a2-input" placeholder="ulangi kata sandi Anda" autocomplete="new-password" minlength="6" required>
+                        <button type="button" class="a2-eye" data-toggle-pass="#confirm_password" aria-label="Tampilkan kata sandi">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="a2-field a2-rise">
+                    <label for="phone">No. HP <span class="a2-optional">(opsional)</span></label>
+                    <div class="a2-control">
+                        <input type="text" id="phone" name="phone" class="a2-input" placeholder="08xx xxxx xxxx" autocomplete="tel">
+                    </div>
+                </div>
+
+                <button type="submit" class="a2-btn a2-rise" data-auth-btn>
+                    <span>Buat Akun</span><i class="fa-solid fa-arrow-right"></i>
                 </button>
-
-                <div class="text-center">
-                    <p class="text-muted small ls-1">ALREADY HAVE AN ACCOUNT? <a href="<?= base_url('login') ?>" class="text-dark fw-bold text-decoration-none">LOGIN HERE</a></p>
-                </div>
             </form>
+
+            <p class="a2-alt a2-rise">Sudah punya akun? <a href="<?= base_url('login') ?>">Masuk</a></p>
         </div>
-    </div>
+    </main>
 </div>
+
+<script>
+document.querySelectorAll('[data-toggle-pass]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var input = document.querySelector(btn.getAttribute('data-toggle-pass'));
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.innerHTML = '<i class="fa-' + (show ? 'solid' : 'regular') + ' fa-eye' + (show ? '-slash' : '') + '"></i>';
+        btn.setAttribute('aria-label', show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+    });
+});
+document.querySelectorAll('[data-auth-form]').forEach(function (form) {
+    form.addEventListener('submit', function () {
+        var btn = form.querySelector('[data-auth-btn]');
+        if (!btn || btn.dataset.loading) { return; }
+        btn.dataset.loading = '1';
+        btn.disabled = true;
+        var label = btn.querySelector('span');
+        if (label) { label.textContent = 'Mohon tunggu'; }
+    });
+});
+</script>

@@ -15,7 +15,7 @@ class M_product extends CI_Model {
      * Ambil semua produk dengan join kategori
      */
     public function get_all($limit = null, $offset = 0, $recommended_ids = []) {
-        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold');
+        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold, (SELECT COUNT(*) FROM likes lk WHERE lk.product_id = p.id) as like_count');
         $this->db->from('products p');
         $this->db->join('categories c', 'c.id = p.category_id', 'left');
         $this->db->join('ratings r', 'r.product_id = p.id', 'left');
@@ -66,7 +66,7 @@ class M_product extends CI_Model {
      * Ambil produk berdasarkan ID
      */
     public function get_by_id($id) {
-        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold');
+        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold, (SELECT COUNT(*) FROM likes lk WHERE lk.product_id = p.id) as like_count');
         $this->db->from('products p');
         $this->db->join('categories c', 'c.id = p.category_id', 'left');
         $this->db->join('ratings r', 'r.product_id = p.id', 'left');
@@ -80,7 +80,7 @@ class M_product extends CI_Model {
      * Ambil produk berdasarkan slug
      */
     public function get_by_slug($slug) {
-        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold');
+        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold, (SELECT COUNT(*) FROM likes lk WHERE lk.product_id = p.id) as like_count');
         $this->db->from('products p');
         $this->db->join('categories c', 'c.id = p.category_id', 'left');
         $this->db->join('ratings r', 'r.product_id = p.id', 'left');
@@ -94,7 +94,7 @@ class M_product extends CI_Model {
      * Ambil produk berdasarkan kategori
      */
     public function get_by_category($category_slug, $limit = null, $offset = 0, $recommended_ids = []) {
-        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold');
+        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold, (SELECT COUNT(*) FROM likes lk WHERE lk.product_id = p.id) as like_count');
         $this->db->from('products p');
         $this->db->join('categories c', 'c.id = p.category_id', 'left');
         $this->db->join('ratings r', 'r.product_id = p.id', 'left');
@@ -120,7 +120,7 @@ class M_product extends CI_Model {
      */
     public function get_by_ids($ids) {
         if (empty($ids)) return [];
-        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold');
+        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold, (SELECT COUNT(*) FROM likes lk WHERE lk.product_id = p.id) as like_count');
         $this->db->from('products p');
         $this->db->join('categories c', 'c.id = p.category_id', 'left');
         $this->db->join('ratings r', 'r.product_id = p.id', 'left');
@@ -134,7 +134,7 @@ class M_product extends CI_Model {
      * Ambil produk terbaru (fallback rekomendasi)
      */
     public function get_latest($limit = 8) {
-        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold');
+        $this->db->select('p.*, c.name as category_name, c.slug as category_slug, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count, COALESCE(oi_sub.total_sold, 0) as total_sold, (SELECT COUNT(*) FROM likes lk WHERE lk.product_id = p.id) as like_count');
         $this->db->from('products p');
         $this->db->join('categories c', 'c.id = p.category_id', 'left');
         $this->db->join('ratings r', 'r.product_id = p.id', 'left');
@@ -555,5 +555,37 @@ class M_product extends CI_Model {
             $p->is_liked      = in_array((int)$p->id, $liked_ids);
         }
         return $products;
+    }
+
+    /**
+     * Daftar produk yang disukai user (pengganti halaman wishlist).
+     * Bentuk output sama dengan get_user_wishlist lama: produk + rating rata2 + total terjual.
+     */
+    public function get_user_liked_products($user_id) {
+        $this->db->select('l.id AS like_id, l.product_id, p.name, p.slug, p.price, p.image,
+                           COALESCE(AVG(r.rating), 0) as avg_rating,
+                           COALESCE(oi_sub.total_sold, 0) as total_sold,
+                           (SELECT COUNT(*) FROM likes lk WHERE lk.product_id = l.product_id) as like_count,
+                           (SELECT COUNT(*) FROM ratings rt WHERE rt.product_id = l.product_id AND rt.review IS NOT NULL AND rt.review <> \'\') as comment_count,
+                           c.name as category_name');
+        $this->db->from('likes l');
+        $this->db->join('products p', 'p.id = l.product_id', 'left');
+        $this->db->join('categories c', 'c.id = p.category_id', 'left');
+        $this->db->join('ratings r', 'r.product_id = p.id', 'left');
+        $this->db->join('(SELECT product_id, SUM(qty) as total_sold FROM order_items GROUP BY product_id) oi_sub', 'oi_sub.product_id = p.id', 'left');
+        $this->db->where('l.user_id', $user_id);
+        $this->db->group_by('l.product_id, l.id, p.name, p.slug, p.price, p.image, c.name, oi_sub.total_sold');
+        $this->db->order_by('MAX(l.created_at)', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    /**
+     * ID produk yang disukai user — untuk status hati terisi pada kartu produk.
+     */
+    public function get_user_like_ids($user_id) {
+        if (!$user_id) return [];
+        return array_map('intval',
+            array_column($this->db->select('product_id')->get_where('likes', ['user_id' => $user_id])->result_array(), 'product_id')
+        );
     }
 }

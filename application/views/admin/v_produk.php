@@ -24,6 +24,7 @@
                     <th>Kategori</th>
                     <th>Harga</th>
                     <th width="100">Stok</th>
+                    <th width="80">Suka</th>
                     <th class="text-end pe-4" width="110">Aksi</th>
                 </tr>
             </thead>
@@ -46,6 +47,10 @@
                             <span class="admin-badge badge-completed"><?= $p->stock ?></span>
                         <?php endif; ?>
                     </td>
+                    <td class="num">
+                        <span style="color: #f43f5e;"><i class="fas fa-heart" style="font-size: .72rem;"></i></span>
+                        <?= (int)($p->like_count ?? 0) ?>
+                    </td>
                     <td class="text-end pe-4">
                         <div class="d-flex justify-content-end gap-1">
                             <a href="<?= base_url('admin/produk/edit/'.$p->id) ?>" class="icon-btn" title="Edit produk">
@@ -60,7 +65,7 @@
                     </td>
                 </tr>
                 <?php endforeach; else: ?>
-                <tr><td colspan="6">
+                <tr><td colspan="7">
                     <div class="empty-state">
                         <div class="empty-icon"><i class="fas fa-box-open"></i></div>
                         <h6>Belum ada produk</h6>

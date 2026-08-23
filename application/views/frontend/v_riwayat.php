@@ -1,67 +1,46 @@
-<div class="container py-5 mt-5">
-    <div class="mb-5 text-center">
-        <h1 class="fw-bold display-5 ls-1">MY ORDERS</h1>
-        <p class="text-muted small text-uppercase ls-2">Track and manage your order history</p>
+<div class="container">
+    <div class="page-head text-center">
+        <span class="eyebrow">Riwayat</span>
+        <h1 class="page-title mt-2">Pesanan saya</h1>
+        <p style="color:var(--muted); font-size:.9rem;" class="mb-0">Lacak dan kelola riwayat pesanan Anda.</p>
     </div>
 
     <?php if (!empty($orders)): ?>
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="py-3 px-4 border-0 small fw-bold text-uppercase ls-1">Order ID</th>
-                                <th class="py-3 border-0 small fw-bold text-uppercase ls-1">Date</th>
-                                <th class="py-3 border-0 small fw-bold text-uppercase ls-1">Total</th>
-                                <th class="py-3 border-0 small fw-bold text-uppercase ls-1 text-center">Status</th>
-                                <th class="py-3 px-4 border-0 small fw-bold text-uppercase ls-1 text-end">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($orders as $o): ?>
-                                <tr class="border-bottom">
-                                    <td class="py-4 px-4 border-0">
-                                        <span class="fw-bold ls-1 text-dark">#<?= $o->id ?></span>
-                                    </td>
-                                    <td class="py-4 border-0 text-muted small">
-                                        <?= date('d M Y, H:i', strtotime($o->created_at)) ?>
-                                    </td>
-                                    <td class="py-4 border-0 fw-bold">
-                                        Rp <?= number_format($o->total_price, 0, ',', '.') ?>
-                                    </td>
-                                    <td class="py-4 border-0 text-center">
-                                        <?php 
-                                            $config = [
-                                                'pending'  => ['bg' => 'bg-warning', 'icon' => 'fa-clock'],
-                                                'paid'     => ['bg' => 'bg-success', 'icon' => 'fa-check-circle'],
-                                                'shipped'  => ['bg' => 'bg-info', 'icon' => 'fa-shipping-fast'],
-                                                'rejected' => ['bg' => 'bg-danger', 'icon' => 'fa-times-circle']
-                                            ];
-                                            $st = $config[$o->status] ?? ['bg' => 'bg-secondary', 'icon' => 'fa-info-circle'];
-                                        ?>
-                                        <span class="badge <?= $st['bg'] ?> bg-opacity-10 <?= str_replace('bg-', 'text-', $st['bg']) ?> border border-<?= str_replace('bg-', '', $st['bg']) ?> border-opacity-25 px-3 py-2 rounded-pill fw-bold text-uppercase ls-1" style="font-size: 0.65rem;">
-                                            <i class="fas <?= $st['icon'] ?> me-1"></i> <?= $o->status ?>
-                                        </span>
-                                    </td>
-                                    <td class="py-4 px-4 border-0 text-end">
-                                        <a href="<?= base_url('pesanan/detail/' . $o->id) ?>" class="btn btn-dark btn-sm rounded-0 px-4 py-2 fw-bold ls-1">DETAILS</a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="row justify-content-center pb-5">
+            <div class="col-lg-9">
+                <?php foreach ($orders as $o): ?>
+                    <div class="order-card card-soft flex-column flex-sm-row align-items-sm-center">
+                        <div>
+                            <div class="order-id">Pesanan #<?= $o->id ?></div>
+                            <div class="order-date"><?= tanggal_indo(strtotime($o->created_at)) ?>, <?= date('H:i', strtotime($o->created_at)) ?> WIB</div>
+                        </div>
+                        <?php
+                            $st_map = [
+                                'pending'   => 'st-pending',
+                                'paid'      => 'st-paid',
+                                'processed' => 'st-processed',
+                                'shipped'   => 'st-shipped',
+                                'delivered' => 'st-delivered',
+                                'rejected'  => 'st-rejected',
+                                'cancelled' => 'st-cancelled',
+                            ];
+                            $st_cls = $st_map[$o->status] ?? 'st-cancelled';
+                        ?>
+                        <span class="st-chip <?= $st_cls ?>"><i class="fas fa-circle" style="font-size:.4rem;"></i> <?= status_label_id($o->status) ?></span>
+                        <div class="ms-sm-auto text-sm-end mt-3 mt-sm-0">
+                            <div class="order-total tnum">Rp <?= number_format($o->total_price, 0, ',', '.') ?></div>
+                            <a href="<?= base_url('pesanan/detail/' . $o->id) ?>" class="btn-text2 btn-sm2">Detail <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
     <?php else: ?>
-        <div class="text-center py-5">
-            <div class="mb-4">
-                <i class="fas fa-box-open display-1 text-muted opacity-10"></i>
-            </div>
-            <h2 class="fw-bold ls-1">NO ORDERS YET</h2>
-            <p class="text-muted">You haven't placed any orders with us yet.</p>
-            <a href="<?= base_url('katalog') ?>" class="btn-discovery d-inline-block mt-4">DISCOVER PRODUCTS</a>
+        <div class="empty2 card-soft mb-5">
+            <div class="ico"><i class="fas fa-box-open"></i></div>
+            <h3>Belum ada pesanan</h3>
+            <p>Anda belum memiliki pesanan.</p>
+            <a href="<?= base_url('katalog') ?>" class="btn-ink">Jelajahi produk</a>
         </div>
     <?php endif; ?>
 </div>

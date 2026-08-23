@@ -10,7 +10,7 @@ class Welcome extends CI_Controller {
     public function __construct() {
         parent::__construct();
         date_default_timezone_set('Asia/Jakarta');
-        $this->load->model(['M_product', 'M_rating', 'M_cart', 'M_order', 'M_wishlist']);
+        $this->load->model(['M_product', 'M_rating', 'M_cart', 'M_order']);
     }
 
     // -------------------------------------------------------
@@ -20,12 +20,6 @@ class Welcome extends CI_Controller {
         $user_id = $this->session->userdata('user_id');
         if (!$user_id) return 0;
         return $this->M_cart->count_cart($user_id);
-    }
-
-    private function _wishlist_count() {
-        $user_id = $this->session->userdata('user_id');
-        if (!$user_id) return 0;
-        return $this->M_wishlist->count_wishlist($user_id);
     }
 
     // -------------------------------------------------------
@@ -51,7 +45,6 @@ class Welcome extends CI_Controller {
             'title'      => 'Riwayat Rating Saya',
             'ratings'    => $this->M_rating->get_user_ratings_with_product($user_id),
             'cart_count' => $this->_cart_count(),
-            'wishlist_count' => $this->_wishlist_count(),
             'notif_count'=> $this->_notification_count(),
             'categories' => $this->M_product->get_categories()
         ];
@@ -159,9 +152,8 @@ class Welcome extends CI_Controller {
             'sections'        => $sections,
             'latest_products' => $latest_products,
             'categories'      => $categories,
-            'user_wishlist_ids' => $this->_get_user_wishlist_ids(),
+            'user_like_ids'  => $this->_get_user_like_ids(),
             'cart_count'      => $this->_cart_count(),
-            'wishlist_count'  => $this->_wishlist_count(),
             'notif_count'     => $this->_notification_count(),
             'total_orders'    => $this->M_order->count_all(),
         ];
@@ -228,9 +220,8 @@ class Welcome extends CI_Controller {
             'recommended_ids' => $recommended_ids,
             'rec_origins'     => $origins,
             'categories'      => $this->M_product->get_categories(),
-            'user_wishlist_ids' => $this->_get_user_wishlist_ids(),
+            'user_like_ids'  => $this->_get_user_like_ids(),
             'cart_count'      => $this->_cart_count(),
-            'wishlist_count'  => $this->_wishlist_count(),
             'notif_count'     => $this->_notification_count(),
             'pagination'      => $this->pagination->create_links(),
         ];
@@ -286,9 +277,8 @@ class Welcome extends CI_Controller {
             'recommended_ids' => $recommended_ids,
             'rec_origins'     => $origins,
             'categories'      => $this->M_product->get_categories(),
-            'user_wishlist_ids' => $this->_get_user_wishlist_ids(),
+            'user_like_ids'  => $this->_get_user_like_ids(),
             'cart_count'      => $this->_cart_count(),
-            'wishlist_count'  => $this->_wishlist_count(),
             'notif_count'     => $this->_notification_count(),
             'active_slug'     => $slug,
             'pagination'      => $this->pagination->create_links(),
@@ -353,7 +343,6 @@ class Welcome extends CI_Controller {
             'variants'    => $this->M_product->get_variants($product->id),
             'avg_rating'  => $avg_rating,
             'user_rating' => $user_rating,
-            'is_wishlist' => $user_id ? $this->M_wishlist->check_exists($user_id, $product->id) : false,
             'like_count'    => $this->M_product->count_likes($product->id),
             'comment_count' => $this->M_rating->count_reviews($product->id),
             'is_liked'      => $user_id ? $this->M_product->is_liked_by($user_id, $product->id) : false,
@@ -364,7 +353,6 @@ class Welcome extends CI_Controller {
             'reviews'     => $this->M_rating->get_product_reviews($product->id),
             'categories'  => $this->M_product->get_categories(),
             'cart_count'  => $this->_cart_count(),
-            'wishlist_count' => $this->_wishlist_count(),
             'notif_count' => $this->_notification_count(),
         ];
 
@@ -423,9 +411,8 @@ class Welcome extends CI_Controller {
             'recommended_ids' => $recommended_ids,
             'rec_origins' => $origins,
             'categories' => $this->M_product->get_categories(),
-            'user_wishlist_ids' => $this->_get_user_wishlist_ids(),
+            'user_like_ids'  => $this->_get_user_like_ids(),
             'cart_count' => $this->_cart_count(),
-            'wishlist_count' => $this->_wishlist_count(),
             'notif_count'=> $this->_notification_count(),
             'pagination' => $this->pagination->create_links(),
         ];
@@ -465,7 +452,6 @@ class Welcome extends CI_Controller {
         $data = [
             'title'      => '404 — Halaman Tidak Ditemukan',
             'cart_count' => $this->_cart_count(),
-            'wishlist_count' => $this->_wishlist_count(),
             'categories' => $this->M_product->get_categories(),
         ];
         $this->load->view('frontend/v_header', $data);
@@ -499,41 +485,24 @@ class Welcome extends CI_Controller {
     // SUBMIT RATING & REVIEW
 
     // -------------------------------------------------------
-    public function wishlist() {
+    public function disukai() {
         $user_id = $this->session->userdata('user_id');
         if (!$user_id) {
-            $this->session->set_flashdata('error', 'Silakan login untuk melihat wishlist.');
+            $this->session->set_flashdata('error', 'Silakan login untuk melihat produk yang kamu sukai.');
             redirect('login');
         }
 
         $data = [
-            'title'          => 'Wishlist Saya — JiDoor',
-            'wishlist'       => $this->M_wishlist->get_user_wishlist($user_id),
-            'cart_count'     => $this->_cart_count(),
-            'wishlist_count' => $this->_wishlist_count(),
-            'notif_count'    => $this->_notification_count(),
-            'categories'     => $this->M_product->get_categories()
+            'title'      => 'Produk yang Kamu Sukai — JiDoor',
+            'liked'     => $this->M_product->get_user_liked_products($user_id),
+            'cart_count' => $this->_cart_count(),
+            'notif_count' => $this->_notification_count(),
+            'categories' => $this->M_product->get_categories()
         ];
 
         $this->load->view('frontend/v_header', $data);
-        $this->load->view('frontend/v_wishlist', $data);
+        $this->load->view('frontend/v_disukai', $data);
         $this->load->view('frontend/v_footer', $data);
-    }
-
-    public function toggle_wishlist($product_id) {
-        $user_id = $this->session->userdata('user_id');
-        if (!$user_id) {
-            echo json_encode(['status' => 'error', 'message' => 'Silakan login terlebih dahulu.']);
-            return;
-        }
-
-        if ($this->M_wishlist->check_exists($user_id, $product_id)) {
-            $this->M_wishlist->remove($user_id, $product_id);
-            echo json_encode(['status' => 'removed', 'message' => 'Dihapus dari wishlist.']);
-        } else {
-            $this->M_wishlist->add($user_id, $product_id);
-            echo json_encode(['status' => 'added', 'message' => 'Ditambahkan ke wishlist.']);
-        }
     }
 
     // -------------------------------------------------------
@@ -554,14 +523,9 @@ class Welcome extends CI_Controller {
         ]);
     }
 
-    private function _get_user_wishlist_ids() {
+    private function _get_user_like_ids() {
         $user_id = $this->session->userdata('user_id');
-        $user_wishlist_ids = [];
-        if ($user_id) {
-            $wishlist = $this->M_wishlist->get_user_wishlist($user_id);
-            foreach ($wishlist as $w) { $user_wishlist_ids[] = $w->product_id; }
-        }
-        return $user_wishlist_ids;
+        return $user_id ? $this->M_product->get_user_like_ids($user_id) : [];
     }
 
     // -------------------------------------------------------
@@ -625,18 +589,18 @@ class Welcome extends CI_Controller {
 
         // 1. Best Seller — penjualan tinggi (>= 3 unit terjual)
         if (isset($product->total_sold) && $product->total_sold >= 3) {
-            $rules['Best Seller'] = (int) $product->total_sold * 10;
+            $rules['Terlaris'] = (int) $product->total_sold * 10;
         }
 
         // 2. Trending Now — ada penjualan (total_sold > 0), bukan stok
         if (isset($product->total_sold) && $product->total_sold > 0 && $product->total_sold < 3) {
-            $rules['Trending Now'] = (int) $product->total_sold * 20;
+            $rules['Sedang Tren'] = (int) $product->total_sold * 20;
         }
 
         // 3. Top Rated — rating >= 4.0 dengan minimal 1 review
         if (isset($product->avg_rating) && $product->avg_rating >= 4.0 
             && isset($product->review_count) && $product->review_count >= 1) {
-            $rules['Top Rated'] = (int) ($product->avg_rating * 20);
+            $rules['Rating Tertinggi'] = (int) ($product->avg_rating * 20);
         }
 
         // Sort by score descending

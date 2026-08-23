@@ -69,7 +69,7 @@ class RecommendationEngine:
                     "r": "SELECT COUNT(*) as c, MAX(id) as m FROM ratings",
                     "o": "SELECT COUNT(*) as c, MAX(id) as m FROM orders",
                     "ct": "SELECT COUNT(*) as c, MAX(id) as m FROM cart",
-                    "w": "SELECT COUNT(*) as c, MAX(id) as m FROM wishlists",
+                    "l": "SELECT COUNT(*) as c, MAX(id) as m FROM likes",
                     "v": "SELECT COUNT(*) as c, MAX(id) as m FROM product_views",
                 }
                 sig = ""
@@ -94,7 +94,7 @@ class RecommendationEngine:
         - Explicit Rating → Bobot asli (1-5)
         - Purchase → Sinyal kepercayaan kuat (5.0)
         - Cart → Minat aktif (2.0)
-        - Wishlist → Minat pasif (2.5)
+        - Like → Minat pasif (2.5)
         - Product Views → Sinyal lemah (1.5)
         
         Menerapkan 'Time Decay' agar data lama memiliki pengaruh lebih kecil.
@@ -119,8 +119,8 @@ class RecommendationEngine:
                 cursor.execute("SELECT user_id, product_id, 2.0 as rating, created_at, 'cart' as source FROM cart")
                 s3 = list(cursor.fetchall())
                 
-                # 4. Wishlist
-                cursor.execute("SELECT user_id, product_id, 2.5 as rating, created_at, 'wishlist' as source FROM wishlists")
+                # 4. Like
+                cursor.execute("SELECT user_id, product_id, 2.5 as rating, created_at, 'like' as source FROM likes")
                 s4 = list(cursor.fetchall())
                 
                 # 5. Product Views (Implicit)
@@ -147,8 +147,8 @@ class RecommendationEngine:
             df['factor'] = df['days_old'].apply(get_decay_factor)
             df['rating'] = df['rating'] * df['factor']
 
-            # Prioritas: Explicit > Purchase > Wishlist > Cart > View
-            source_rank = {'explicit': 4, 'purchase': 3, 'wishlist': 2, 'cart': 1, 'view': 0}
+            # Prioritas: Explicit > Purchase > Like > Cart > View
+            source_rank = {'explicit': 4, 'purchase': 3, 'like': 2, 'cart': 1, 'view': 0}
             df['rank'] = df['source'].map(source_rank)
             df = df.sort_values(['user_id', 'product_id', 'rank'], ascending=False)
             df = df.drop_duplicates(['user_id', 'product_id'])
@@ -1040,7 +1040,7 @@ class RecommendationEngine:
             trending_items = fill_section(pop_ids)
             if trending_items:
                 sections.append({
-                    "title": "Sedang tren 🔥",
+                    "title": "Sedang tren",
                     "origin": "Trending",
                     "items": [{"id": int(pid), "origin": "Trending Now"} for pid in trending_items]
                 })
@@ -1050,7 +1050,7 @@ class RecommendationEngine:
             new_filtered = [pid for pid in new_items if pid not in shown_ids]
             if new_filtered:
                 sections.append({
-                    "title": "Produk baru untuk Anda 🎉",
+                    "title": "Baru tiba untukmu",
                     "origin": "Fresh",
                     "items": [{"id": int(pid), "origin": "New Arrival"} for pid in new_filtered]
                 })

@@ -31,7 +31,8 @@ $route['search/(:any)']              = 'welcome/search/$1';
 $route['produk/(:any)']              = 'welcome/detail/$1';
 $route['rate']                       = 'welcome/rate';
 $route['riwayat-rating']             = 'welcome/rating_history';
-$route['wishlist']                   = 'welcome/wishlist';
+$route['disukai']                    = 'welcome/disukai';
+$route['wishlist']                   = 'welcome/disukai';
 
 // -------------------------------------------------------
 // CHAT ROUTES (Revisi #7)

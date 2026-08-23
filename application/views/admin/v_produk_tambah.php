@@ -161,7 +161,7 @@
                                 Produk bisa custom
                             </label>
                         </div>
-                        <span class="switch-badge"><i class="fas fa-pen-ruler me-1"></i>Custom Order</span>
+                        <span class="switch-badge"><i class="fas fa-pen-ruler me-1"></i>Pesanan Kustom</span>
                     </div>
                     <p class="text-muted small mb-0 mt-3">Pelanggan dapat menulis permintaan custom saat membeli dan mengunggah gambar referensi saat checkout.</p>
                 </div>

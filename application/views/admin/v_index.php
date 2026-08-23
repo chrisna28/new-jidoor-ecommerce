@@ -141,7 +141,7 @@ if ($nRev >= 2) {
                     <?php foreach(array_slice($category_dist, 0, 5) as $cd): ?>
                     <li class="d-flex justify-content-between mb-1">
                         <span><?= htmlspecialchars($cd->category_label) ?></span>
-                        <span class="fw-bold" style="color: var(--text-1);"><?= $cd->product_count ?> Item</span>
+                        <span class="fw-bold" style="color: var(--text-1);"><?= $cd->product_count ?> Produk</span>
                     </li>
                     <?php endforeach; ?>
                 </ul>

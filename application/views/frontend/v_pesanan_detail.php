@@ -1,137 +1,141 @@
-<div class="container py-5 mt-5">
-    <div class="mb-5">
-        <a href="<?= base_url('pesanan') ?>" class="text-decoration-none text-muted small fw-bold ls-1"><i class="fas fa-arrow-left me-2"></i> BACK TO MY ORDERS</a>
-        <h1 class="fw-bold display-6 mt-3 ls-1">ORDER #<?= $order->id ?></h1>
-        <div class="d-flex align-items-center gap-3 mt-2">
-            <span class="text-muted small ls-1 text-uppercase"><?= date('d F Y, H:i', strtotime($order->created_at)) ?></span>
-            <span class="badge bg-dark rounded-0 px-3 py-2 fw-bold ls-1 text-uppercase" style="font-size: 0.65rem;"><?= $order->status ?></span>
+<div class="container">
+    <div class="page-head">
+        <nav class="crumb2">
+            <a href="<?= base_url('pesanan') ?>"><i class="fas fa-arrow-left me-1"></i> Pesanan saya</a>
+            <span class="sep">/</span>
+            <strong>Pesanan #<?= $order->id ?></strong>
+        </nav>
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <h1 class="page-title">Pesanan #<?= $order->id ?></h1>
+            <?php
+                $st_map = [
+                    'pending'   => 'st-pending',
+                    'paid'      => 'st-paid',
+                    'processed' => 'st-processed',
+                    'shipped'   => 'st-shipped',
+                    'delivered' => 'st-delivered',
+                    'rejected'  => 'st-rejected',
+                    'cancelled' => 'st-cancelled',
+                ];
+                $st_cls = $st_map[$order->status] ?? 'st-cancelled';
+            ?>
+            <span class="st-chip <?= $st_cls ?>"><i class="fas fa-circle" style="font-size:.4rem;"></i> <?= status_label_id($order->status) ?></span>
         </div>
+        <p style="color:var(--muted); font-size:.85rem;" class="mb-0 mt-2"><?= tanggal_indo(strtotime($order->created_at)) ?>, <?= date('H:i', strtotime($order->created_at)) ?> WIB</p>
     </div>
 
-    <div class="row g-5">
-        <!-- Left: Items & Details -->
+    <div class="row g-5 pb-5">
+        <!-- Kiri: Item & Detail -->
         <div class="col-lg-8">
-            <div class="mb-5 pb-5 border-bottom">
-                <h5 class="fw-bold text-uppercase ls-2 mb-4">Ordered Items</h5>
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <tbody>
-                            <?php foreach ($items as $item): ?>
-                                <tr>
-                                    <td class="py-3 ps-0" style="width: 80px;">
-                                        <div class="bg-light p-1" style="width: 70px; height: 90px;">
-                                            <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/70x90/f5f5f5/000000?text=P' ?>" class="w-100 h-100 object-fit-cover" alt="<?= htmlspecialchars($item->name) ?>">
-                                        </div>
-                                    </td>
-                                    <td class="py-3">
-                                        <h6 class="fw-bold mb-1 ls-1"><?= htmlspecialchars($item->name) ?></h6>
-                                        <?php if ((!empty($item->color) && $item->color !== 'Standar') || (!empty($item->size) && $item->size !== 'Standar')): ?>
-                                            <p class="small mb-1">
-                                                <?php if (!empty($item->color) && $item->color !== 'Standar'): ?>
-                                                    <span class="badge bg-light text-dark border me-1"><?= htmlspecialchars($item->variant_name1 ?: 'Variasi') ?>: <?= htmlspecialchars($item->color) ?></span>
-                                                <?php endif; ?>
-                                                <?php if (!empty($item->size) && $item->size !== 'Standar'): ?>
-                                                    <span class="badge bg-light text-dark border"><?= htmlspecialchars($item->variant_name2 ?: 'Variasi') ?>: <?= htmlspecialchars($item->size) ?></span>
-                                                <?php endif; ?>
-                                            </p>
-                                        <?php endif; ?>
-                                        <?php if (!empty($item->note)): ?>
-                                            <p class="small text-muted fst-italic mb-1"><i class="fas fa-pen-nib me-1"></i><?= htmlspecialchars($item->note) ?></p>
-                                        <?php endif; ?>
-                                        <?php if (!empty($item->custom_text) || !empty($item->custom_image)): ?>
-                                            <div class="small mb-1 p-2 rounded-3 bg-light border border-warning border-opacity-50">
-                                                <span class="fw-bold text-uppercase ls-1" style="font-size: 0.65rem;"><i class="fas fa-wand-magic-sparkles me-1 text-warning"></i> Custom</span>
-                                                <?php if (!empty($item->custom_text)): ?>
-                                                    <div class="fst-italic text-muted">"<?= htmlspecialchars($item->custom_text) ?>"</div>
-                                                <?php endif; ?>
-                                                <?php if (!empty($item->custom_image)): ?>
-                                                    <a href="<?= base_url($item->custom_image) ?>" target="_blank">
-                                                        <img src="<?= base_url($item->custom_image) ?>" class="img-fluid rounded-2 mt-1" style="max-height: 100px;" alt="Referensi custom">
-                                                    </a>
-                                                <?php endif; ?>
-                                            </div>
-                                        <?php endif; ?>
-                                        <p class="small text-muted mb-0">Qty: <?= $item->qty ?> &times; Rp <?= number_format($item->price, 0, ',', '.') ?></p>
-                                    </td>
-                                    <td class="py-3 text-end fw-bold ls-1 pe-0">
-                                        Rp <?= number_format($item->price * $item->qty, 0, ',', '.') ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="2" class="py-4 ps-0 text-uppercase small fw-bold ls-1">Order Total</td>
-                                <td class="py-4 pe-0 text-end fw-800 fs-5">Rp <?= number_format($order->total_price, 0, ',', '.') ?></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
+            <section class="card-soft p-4 p-md-5 mb-4">
+                <h5 class="fw-semibold mb-4">Item pesanan</h5>
+                <?php foreach ($items as $item): ?>
+                    <div class="cart-row flex-column flex-sm-row align-items-sm-center" style="border-top:0;">
+                        <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/70x90/f5f5f5/000000?text=P' ?>" class="cart-thumb" style="width:70px; height:90px;" alt="<?= htmlspecialchars($item->name) ?>">
+                        <div class="flex-grow-1 mt-3 mt-sm-0">
+                            <h6 class="cart-name mb-1" style="font-size:.92rem; cursor:default;"><?= htmlspecialchars($item->name) ?></h6>
+                            <?php if ((!empty($item->color) && $item->color !== 'Standar') || (!empty($item->size) && $item->size !== 'Standar')): ?>
+                                <div class="cart-var">
+                                    <?= trim((!empty($item->color) && $item->color !== 'Standar' ? ($item->variant_name1 ?: 'Variasi') . ': ' . htmlspecialchars($item->color) . ' · ' : '') . (!empty($item->size) && $item->size !== 'Standar' ? ($item->variant_name2 ?: 'Variasi') . ': ' . htmlspecialchars($item->size) : ''), ' ·') ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($item->note)): ?>
+                                <div class="cart-var fst-italic"><i class="fas fa-pen-nib me-1"></i><?= htmlspecialchars($item->note) ?></div>
+                            <?php endif; ?>
+                            <?php if (!empty($item->custom_text) || !empty($item->custom_image)): ?>
+                                <div class="mt-2 p-3 rounded-3" style="background:var(--paper); border:1px dashed var(--line-strong);">
+                                    <span class="eyebrow" style="font-size:.62rem;"><i class="fas fa-wand-magic-sparkles me-1" style="color:var(--accent-warm);"></i> Kustom</span>
+                                    <?php if (!empty($item->custom_text)): ?>
+                                        <div class="fst-italic cart-var">&ldquo;<?= htmlspecialchars($item->custom_text) ?>&rdquo;</div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($item->custom_image)): ?>
+                                        <a href="<?= base_url($item->custom_image) ?>" target="_blank">
+                                            <img src="<?= base_url($item->custom_image) ?>" class="img-fluid rounded-2 mt-2" style="max-height: 100px;" alt="Referensi custom">
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                            <div class="cart-var tnum">Qty: <?= $item->qty ?> &times; Rp <?= number_format($item->price, 0, ',', '.') ?></div>
+                        </div>
+                        <div class="fw-semibold tnum text-sm-end ms-auto mt-3 mt-sm-0" style="min-width:110px;">Rp <?= number_format($item->price * $item->qty, 0, ',', '.') ?></div>
+                    </div>
+                <?php endforeach; ?>
 
-            <div class="row g-4 mb-5">
+                <div class="sum-row sum-total pt-4 mt-2" style="border-top:1px solid var(--line);">
+                    <span>Total pesanan</span>
+                    <span class="tnum">Rp <?= number_format($order->total_price, 0, ',', '.') ?></span>
+                </div>
+            </section>
+
+            <div class="row g-4">
                 <div class="col-md-6">
-                    <h6 class="fw-bold text-uppercase ls-1 mb-3">Shipping Address</h6>
-                    <div class="text-muted small lh-lg">
-                        <strong class="text-dark d-block mb-1"><?= htmlspecialchars($order->receiver_name) ?></strong>
-                        <?= nl2br(htmlspecialchars($order->address)) ?><br>
-                        <?= htmlspecialchars($order->city) ?>, <?= htmlspecialchars($order->province) ?><br>
-                        <i class="fas fa-phone-alt me-2 mt-2"></i> <?= $order->phone ?>
+                    <div class="card-soft p-4 h-100">
+                        <span class="eyebrow" style="margin-bottom:12px;">Alamat pengiriman</span>
+                        <div class="lh-lg" style="color:var(--muted); font-size:.88rem;">
+                            <strong style="color:var(--ink);" class="d-block mb-1"><?= htmlspecialchars($order->receiver_name) ?></strong>
+                            <?= nl2br(htmlspecialchars($order->address)) ?><br>
+                            <?= htmlspecialchars($order->city) ?>, <?= htmlspecialchars($order->province) ?><br>
+                            <i class="fas fa-phone me-2 mt-2"></i> <?= $order->phone ?>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <h6 class="fw-bold text-uppercase ls-1 mb-3">Payment Method</h6>
-                    <div class="text-muted small lh-lg">
-                        <strong class="text-dark d-block mb-1">Bank Transfer (Manual)</strong>
-                        Mandiri Transfer: 123-456-7890 (JiDoor Store)<br>
-                        Status: <span class="fw-bold <?= $order->status == 'pending' ? 'text-warning' : 'text-success' ?>"><?= strtoupper($order->status) ?></span>
+                    <div class="card-soft p-4 h-100">
+                        <span class="eyebrow" style="margin-bottom:12px;">Metode pembayaran</span>
+                        <div class="lh-lg" style="color:var(--muted); font-size:.88rem;">
+                            <strong style="color:var(--ink);" class="d-block mb-1"><?= !empty($order->snap_token) || !empty($order->midtrans_order_id) ? 'Bayar Online (Midtrans)' : 'Transfer Bank (Manual)' ?></strong>
+                            <?php if (empty($order->snap_token) && empty($order->midtrans_order_id)): ?>
+                                Transfer Mandiri: 123-456-7890 (JiDoor Store)<br>
+                            <?php endif; ?>
+                            Status: <strong style="color:var(--ink);"><?= status_label_id($order->status) ?></strong>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right: Proof of Payment & Instructions -->
+        <!-- Kanan: Aksi -->
         <div class="col-lg-4">
-            <div class="bg-light p-4 p-md-5">
-                <h5 class="fw-bold text-uppercase ls-2 mb-4">Payment Proof</h5>
-                
+            <div class="summary-card card-soft">
+                <h5 class="fw-semibold mb-4">Bukti pembayaran</h5>
+
                 <?php if ($order->payment_proof): ?>
-                    <div class="mb-4">
-                        <p class="small text-muted mb-3">You have uploaded your payment proof. Our team will verify it shortly.</p>
-                        <div class="bg-white border p-2 mb-3">
-                            <img src="<?= base_url('uploads/payments/' . $order->payment_proof) ?>" class="img-fluid w-100" alt="Proof">
-                        </div>
-                        <?php if ($order->status == 'pending'): ?>
-                            <a href="<?= base_url('checkout/bukti/' . $order->id) ?>" class="btn btn-outline-dark btn-sm w-100 rounded-0 fw-bold ls-1">RE-UPLOAD PROOF</a>
-                        <?php endif; ?>
+                    <p class="fx-hint mb-3" style="font-size:.85rem;">Bukti pembayaran Anda sudah kami terima. Tim kami akan segera memverifikasinya.</p>
+                    <div class="rounded-3 overflow-hidden mb-3" style="border:1px solid var(--line);">
+                        <img src="<?= base_url('uploads/payments/' . $order->payment_proof) ?>" class="img-fluid w-100" alt="Bukti bayar">
                     </div>
+                    <?php if ($order->status == 'pending'): ?>
+                        <a href="<?= base_url('checkout/bukti/' . $order->id) ?>" class="btn-line btn-sm2 w-100">Unggah ulang bukti</a>
+                    <?php endif; ?>
                 <?php else: ?>
-                    <div class="text-center py-4">
-                        <i class="fas fa-cloud-upload-alt display-4 text-muted opacity-25 mb-3"></i>
-                        <p class="small text-muted mb-4">Please upload your payment proof to complete the verification process.</p>
-                        <a href="<?= base_url('checkout/bukti/' . $order->id) ?>" class="btn btn-dark w-100 py-3 rounded-0 fw-bold ls-1">UPLOAD PROOF NOW</a>
+                    <div class="text-center py-2 mb-3">
+                        <div class="empty2 py-3 px-2">
+                            <div class="ico"><i class="fas fa-cloud-arrow-up"></i></div>
+                            <p class="fx-hint" style="font-size:.85rem;">Silakan unggah bukti pembayaran untuk melanjutkan proses verifikasi.</p>
+                        </div>
+                        <a href="<?= base_url('checkout/bukti/' . $order->id) ?>" class="btn-ink btn-block2">Unggah bukti sekarang</a>
                     </div>
                 <?php endif; ?>
 
                 <!-- Bayar Online via Midtrans Snap (Revisi #6) -->
                 <?php if ($order->status === 'pending'): ?>
-                    <div class="mt-4 p-3 bg-white border border-success border-2 rounded-0">
-                        <h6 class="fw-bold text-uppercase ls-1 mb-2"><i class="fas fa-bolt text-success me-2"></i>Bayar Online</h6>
-                        <p class="small text-muted mb-3">QRIS / Virtual Account / E-wallet / Kartu — via Midtrans.</p>
-                        <button type="button" id="pay-button" class="btn btn-success w-100 py-3 rounded-0 fw-bold ls-1">
-                            <i class="fas fa-lock me-2"></i>BAYAR SEKARANG
+                    <div class="mt-4 p-4 rounded-3" style="background:var(--paper); border:1px solid var(--line);">
+                        <h6 class="fw-semibold mb-2" style="font-size:.88rem;"><i class="fas fa-bolt me-2" style="color:var(--accent-warm);"></i>Bayar online</h6>
+                        <p class="fx-hint mb-3">QRIS / Virtual Account / E-wallet / Kartu — via Midtrans.</p>
+                        <button type="button" id="pay-button" class="btn-ink btn-block2 btn-sm2">
+                            <i class="fas fa-lock"></i> Bayar sekarang
                         </button>
                     </div>
                 <?php endif; ?>
 
                 <!-- Kartu Resi (Revisi #5) -->
                 <?php if (!empty($order->resi)): ?>
-                    <div class="mt-4 p-3 bg-white border border-dark border-2 rounded-0">
-                        <div class="small fw-bold text-uppercase ls-1 mb-1"><i class="fas fa-truck me-2"></i><?= htmlspecialchars($order->courier) ?></div>
+                    <div class="mt-4 p-4 rounded-3" style="background:var(--paper); border:1px solid var(--line);">
+                        <div class="fw-semibold mb-2" style="font-size:.82rem;"><i class="fas fa-truck-fast me-2"></i><?= htmlspecialchars($order->courier) ?></div>
                         <div class="d-flex justify-content-between align-items-center gap-2">
-                            <span class="fw-800 ls-1" id="resiNumber"><?= htmlspecialchars($order->resi) ?></span>
-                            <button type="button" class="btn btn-sm btn-outline-dark rounded-0 px-2 py-1" onclick="copyResi()">
-                                <i class="far fa-copy"></i>
+                            <span class="fw-semibold tnum" id="resiNumber"><?= htmlspecialchars($order->resi) ?></span>
+                            <button type="button" class="btn-text2 btn-sm2" onclick="copyResi()">
+                                <i class="far fa-copy"></i> Salin
                             </button>
                         </div>
                     </div>
@@ -141,44 +145,49 @@
                 <?php if ($order->status === 'shipped'): ?>
                     <form action="<?= base_url('pesanan/diterima/' . $order->id) ?>" method="post" class="mt-4">
                         <?= csrf_field() ?>
-                        <button type="submit" class="btn btn-success w-100 py-3 rounded-0 fw-bold ls-1"
+                        <button type="submit" class="btn-ink btn-block2"
                                 onclick="return confirm('Konfirmasi pesanan sudah diterima dalam kondisi baik?')">
-                            <i class="fas fa-check-circle me-2"></i> PESANAN DITERIMA
+                            <i class="fas fa-check me-2"></i> Pesanan diterima
                         </button>
                     </form>
                 <?php endif; ?>
 
-                <div class="mt-4 pt-4 border-top">
-                    <h6 class="fw-bold text-uppercase ls-1 mb-3" style="font-size: 0.75rem;">Need Help?</h6>
-                    <a href="#" class="text-decoration-none text-dark small fw-bold ls-1"><i class="fab fa-whatsapp me-2"></i> CHAT WITH SUPPORT</a>
+                <div class="mt-4 pt-4" style="border-top:1px solid var(--line);">
+                    <span class="eyebrow" style="margin-bottom:10px;">Butuh bantuan?</span><br>
+                    <a href="#" class="btn-text2 btn-sm2 ps-0"><i class="fab fa-whatsapp"></i> Chat dengan admin</a>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Timeline Tracking Pesanan (Revisi #5) -->
-        <?php if (!empty($tracking)): ?>
-        <div class="row mt-5 pt-5 border-top">
-            <div class="col-lg-8 mx-auto">
-                <h5 class="fw-bold text-uppercase ls-2 mb-4">Lacak Pesanan</h5>
-                <div class="tracking-timeline">
+    <!-- Timeline Tracking Pesanan (Revisi #5) -->
+    <?php if (!empty($tracking)): ?>
+    <div class="row pb-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="sec-head">
+                <div>
+                    <span class="eyebrow">Perjalanan paket</span>
+                    <h2 class="mt-2">Lacak pesanan</h2>
+                </div>
+            </div>
+            <div class="card-soft p-4 p-md-5 mb-4">
+                <div class="tl">
                     <?php foreach ($tracking as $i => $t): ?>
                         <?php
                             $is_last = ($i === count($tracking) - 1);
                             // Status terlewati = bukan baris terakhir; aktif = baris terakhir
                             $cls = $is_last ? 'active' : 'done';
                         ?>
-                        <div class="track-item <?= $cls ?>">
-                            <div class="track-dot">
-                                <i class="fa<?= $is_last ? 's' : 's' ?> <?= $is_last ? 'fa-circle' : 'fa-check' ?>"></i>
-                            </div>
-                            <div class="pb-4 ps-2">
-                                <div class="fw-bold text-uppercase ls-1 small"><?= strtoupper(htmlspecialchars($t->status)) ?></div>
-                                <div class="small text-muted"><?= date('d M Y, H:i', strtotime($t->created_at)) ?> WIB</div>
+                        <div class="tl-item <?= $cls ?>">
+                            <div class="tl-dot"></div>
+                            <div>
+                                <div class="tl-status"><?= status_label_id($t->status) ?></div>
+                                <div class="tl-time"><?= tanggal_indo(strtotime($t->created_at)) ?> WIB</div>
                                 <?php if (!empty($t->description)): ?>
-                                    <div class="small text-dark mt-1"><?= htmlspecialchars($t->description) ?></div>
+                                    <div class="mt-1" style="font-size:.86rem; color:var(--ink-soft);"><?= htmlspecialchars($t->description) ?></div>
                                 <?php endif; ?>
                                 <?php if (!empty($t->resi)): ?>
-                                    <div class="small mt-1"><span class="fw-bold"><?= htmlspecialchars($t->courier) ?></span> — Resi: <?= htmlspecialchars($t->resi) ?></div>
+                                    <div class="mt-1 tl-time"><strong><?= htmlspecialchars($t->courier) ?></strong> — Resi: <span class="tnum"><?= htmlspecialchars($t->resi) ?></span></div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -186,51 +195,9 @@
                 </div>
             </div>
         </div>
-        <?php endif; ?>
     </div>
+    <?php endif; ?>
 </div>
-
-<style>
-/* Timeline tracking vertikal (Revisi #5) */
-.tracking-timeline { position: relative; }
-.track-item { position: relative; display: flex; align-items: flex-start; }
-.track-item:not(:last-child)::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 34px;
-    bottom: 0;
-    width: 2px;
-    background: rgba(0,0,0,0.08);
-}
-.track-dot {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    margin-right: 12px;
-    z-index: 1;
-}
-.track-item.done .track-dot {
-    background: #000;
-    color: #fff;
-}
-.track-item.active .track-dot {
-    background: #fff;
-    color: #ee4d2d;
-    border: 2px solid #ee4d2d;
-    animation: pulse-dot 1.6s infinite;
-}
-@keyframes pulse-dot {
-    0%   { box-shadow: 0 0 0 0 rgba(238,77,45,0.45); }
-    70%  { box-shadow: 0 0 0 10px rgba(238,77,45,0); }
-    100% { box-shadow: 0 0 0 0 rgba(238,77,45,0); }
-}
-</style>
 
 <script>
 function copyResi() {

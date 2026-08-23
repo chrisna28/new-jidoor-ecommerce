@@ -30,7 +30,7 @@
                         <?php if ($u->role === 'admin'): ?>
                             <span class="badge-role-admin">ADMIN</span>
                         <?php else: ?>
-                            <span class="badge-role-customer">CUSTOMER</span>
+                            <span class="badge-role-customer">PELANGGAN</span>
                         <?php endif ?>
                     </td>
                     <td class="small text-muted"><?= date('d M Y', strtotime($u->created_at)) ?></td>
