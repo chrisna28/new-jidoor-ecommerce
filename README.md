@@ -18,7 +18,7 @@ JiDoor adalah platform e-commerce lengkap (toko pintu & aksesoris) yang dibangun
 | **Pesanan** | Riwayat, detail, timeline tracking (pending → paid → shipped → delivered/cancelled), konfirmasi barang diterima |
 | **Chat Realtime** | WebSocket Ratchet (`chat-server.php`, port 8080) antara customer dan admin, plus offline message |
 | **Admin Panel** | CRUD produk & varian, kelola pesanan + verifikasi pembayaran, resi & pengiriman, users, moderasi rating, dashboard rekomendasi |
-| **AI Recommendation** | Pure Collaborative Filtering (User-Based + Item-Based hybrid) multi-sinyal via `python_api` |
+| **AI Recommendation** | Pure CF hybrid (User + Item-Based) multi-sinyal + lapisan varian warna/ukuran via `python_api` |
 
 ---
 
@@ -212,22 +212,24 @@ Seluruh storefront memakai satu file `assets/css/style.css` (versi cache-bust di
 
 ## 🤖 AI Recommendation Engine (Ringkasan)
 
-Mesin CF murni (tanpa content-based): skor akhir gabungan User-Based (60%) + Item-Based (40%) dengan normalisasi global, cosine similarity atas pivot rating multi-sinyal, mean-centering kondisional (sparsity < 85%), co-occurrence penalty, time-decay, dan strategi cold start.
+Mesin CF murni (tanpa content-based): skor akhir gabungan User-Based + Item-Based (alpha adaptif skala data) dengan normalisasi global, cosine similarity atas pivot rating multi-sinyal, mean-centering kondisional (sparsity < 85%), co-occurrence penalty, time-decay, dan strategi cold start. Hyperparameter menyesuaikan ukuran data otomatis (`scale_hint`): threshold & alpha berbeda untuk katalog kecil (< 15 user) vs besar (> 100 user).
 
-**Sinyal interaksi:** purchase 5.0 · explicit rating 1–5 · wishlist 2.5 · cart 2.0 · view 1.5 (× faktor decay waktu).
+**Sinyal interaksi:** purchase 5.0 · explicit rating 1–5 · wishlist 2.5 · cart 2.0 · view 1.5 (× faktor decay waktu). Pembelian dihitung dari pesanan berstatus `paid`/`shipped`/`delivered`.
+
+**Lapisan varian (`variant_recommender.py`):** setiap rekomendasi produk dilengkapi saran varian terbaik — warna + ukuran — dipilih dari profil preferensi personal (riwayat pembelian bobot 3, keranjang bobot 2), popularitas global varian, dan ketersediaan stok; fallback ke varian populer untuk user baru. Chip varian tampil pada kartu produk (beranda, katalog, detail).
 
 **Endpoint utama (`http://127.0.0.1:8000`):**
 
 | Endpoint | Method | Fungsi |
 | --- | --- | --- |
-| `/recommend/{user_id}?top_n=8&metadata=true` | GET | Rekomendasi utama |
-| `/recommend/sections/{user_id}` | GET | Rekomendasi per-seksi (beranda) |
+| `/recommend/{user_id}?top_n=8&metadata=true&with_variants=true` | GET | Rekomendasi utama (+ varian bila diminta) |
+| `/recommend/sections/{user_id}?with_variants=true` | GET | Rekomendasi per-seksi (beranda) |
 | `/recommend/item/{product_id}?top_n=4` | GET | Produk serupa (halaman detail) |
 | `/track/view` | POST | Catat view `{user_id, product_id, session_id}` |
 | `/admin/stats` | GET | Statistik model (density, coverage, confidence) |
-| `/cache/refresh` | POST | Paksa hitung ulang similarity |
+| `/cache/refresh` | POST | Paksa hitung ulang similarity + bersihkan cache varian |
 
-Integrasi PHP memakai `PY_API_BASE_URL` dari `.env`; jika API mati, halaman tetap tampil tanpa seksi rekomendasi. Detail algoritma lengkap tersedia dalam kode `python_api/recommendation_engine.py`.
+Model CF memantau signature tabel (`ratings`, `orders`, `order_items`, `order_tracking`, `cart`, `likes`, `product_views`) — perubahan status pesanan atau item otomatis memicu hitung ulang tanpa restart. Integrasi PHP memakai `PY_API_BASE_URL` dari `.env`; jika API mati, halaman tetap tampil tanpa seksi rekomendasi. Detail algoritma lengkap tersedia dalam kode `python_api/recommendation_engine.py`.
 
 ---
 
@@ -249,7 +251,7 @@ Integrasi PHP memakai `PY_API_BASE_URL` dari `.env`; jika API mati, halaman teta
 - **Storefront redesign "Editorial Luxe" v3.1** — seluruh halaman frontend & auth ditata ulang; semua kontrak data/JS dipertahankan.
 - **Lupa password disederhanakan** — reset langsung via email terdaftar (kode token/email SMTP & `M_password_reset` dihapus).
 - **Verifikasi pembayaran dua jalur** — finish-redirect (lokal) + webhook (produksi), keduanya idempotent.
-- **Engine CF v5.3** — filter skor 0, dynamic explore distribution, fix KNN assignment.
+- **Engine CF v5.4** — fix status pembelian (`delivered`), signature cache memantau `order_items`/`order_tracking` (recompute otomatis), filter view guest, auto-tuning skala data; lapisan varian baru: rekomendasi warna + ukuran personal per kartu produk.
 
 ---
 

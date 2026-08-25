@@ -57,9 +57,10 @@ class Welcome extends CI_Controller {
     // -------------------------------------------------------
     // Helper: panggil Python API via cURL
     // -------------------------------------------------------
-    private function _get_recommendations($user_id, $limit = 4, $type = 'hybrid', $with_metadata = false) {
+    private function _get_recommendations($user_id, $limit = 4, $type = 'hybrid', $with_metadata = false, $with_variants = false) {
         $api_url = 'http://127.0.0.1:8000/recommend/' . (int)$user_id . '?top_n=' . (int)$limit;
         if ($with_metadata) $api_url .= '&metadata=true';
+        if ($with_variants) $api_url .= '&with_variants=true';
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -78,7 +79,7 @@ class Welcome extends CI_Controller {
     }
 
     private function _get_sectioned_recommendations($user_id, $limit_per_section = 8) {
-        $api_url = 'http://127.0.0.1:8000/recommend/sections/' . (int)$user_id . '?limit_per_section=' . (int)$limit_per_section;
+        $api_url = 'http://127.0.0.1:8000/recommend/sections/' . (int)$user_id . '?limit_per_section=' . (int)$limit_per_section . '&with_variants=true';
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -122,10 +123,11 @@ class Welcome extends CI_Controller {
             foreach ($ids as $id) {
                 foreach ($products as $p) {
                     if ($p->id == $id) {
-                        // Temukan origin untuk badge
+                        // Temukan origin untuk badge + varian terbaik dari API
                         foreach ($sec['items'] as $item) {
                             if ($item['id'] == $id) {
                                 $p->badge_text = $item['origin'];
+                                $p->rec_variant = $item['variant'] ?? NULL;
                                 break;
                             }
                         }
@@ -195,16 +197,23 @@ class Welcome extends CI_Controller {
         $origins         = [];
 
         // Ambil rekomendasi dari API sections agar semua origin (termasuk Discovery & Fresh) terbaca
-        $api_recs = $this->_get_recommendations($user_id ? $user_id : 0, 1000, 'hybrid', true);
+        $variant_map = [];
+        $api_recs = $this->_get_recommendations($user_id ? $user_id : 0, 1000, 'hybrid', true, true);
         foreach ($api_recs as $item) {
             if (!isset($origins[$item['id']])) {
                 $origins[$item['id']] = $item['origin'];
+                if (!empty($item['variant'])) { $variant_map[$item['id']] = $item['variant']; }
                 $recommended_ids[] = $item['id'];
             }
         }
 
         $data_products = $this->M_product->get_all($per_page, $from, $recommended_ids);
         $data_products = $this->M_product->attach_social_counts($data_products, $user_id);
+
+        // Lampirkan varian rekomendasi (warna + ukuran) ke objek produk
+        foreach ($data_products as $p) {
+            if (isset($variant_map[$p->id])) { $p->rec_variant = $variant_map[$p->id]; }
+        }
 
         // -----------------------------------------------------------
         // DIVERSITY BADGES — Assign contextual badges to products
@@ -256,16 +265,23 @@ class Welcome extends CI_Controller {
         $recommended_ids = [];
         $origins         = [];
         // Ambil rekomendasi dari API dengan limit tinggi (Uncapped seperti Step 6) agar semua origin terbaca
-        $api_recs = $this->_get_recommendations($user_id ? $user_id : 0, 1000, 'hybrid', true);
+        $variant_map = [];
+        $api_recs = $this->_get_recommendations($user_id ? $user_id : 0, 1000, 'hybrid', true, true);
         foreach ($api_recs as $item) {
             if (!isset($origins[$item['id']])) {
                 $origins[$item['id']] = $item['origin'];
+                if (!empty($item['variant'])) { $variant_map[$item['id']] = $item['variant']; }
                 $recommended_ids[] = $item['id'];
             }
         }
 
         $data_products = $this->M_product->get_by_category($slug, $per_page, $from, $recommended_ids);
         $data_products = $this->M_product->attach_social_counts($data_products, $user_id);
+
+        // Lampirkan varian rekomendasi (warna + ukuran) ke objek produk
+        foreach ($data_products as $p) {
+            if (isset($variant_map[$p->id])) { $p->rec_variant = $variant_map[$p->id]; }
+        }
 
         // Diversity badges
         $origins = $this->_diversify_badges($data_products, $origins);
@@ -329,13 +345,22 @@ class Welcome extends CI_Controller {
         }
 
         // Dapatkan rekomendasi hybrid global (untuk badges tambahan seperti Trending/Personalized)
-        $hybrid_recs = $this->_get_recommendations($user_id ? $user_id : 0, 100, 'hybrid', true);
+        $hybrid_recs = $this->_get_recommendations($user_id ? $user_id : 0, 100, 'hybrid', true, true);
         $hybrid_ids = array_column($hybrid_recs, 'id');
         $hybrid_origins = [];
-        foreach ($hybrid_recs as $hr) { $hybrid_origins[$hr['id']] = $hr['origin']; }
+        $variant_map_detail = [];
+        foreach ($hybrid_recs as $hr) {
+            $hybrid_origins[$hr['id']] = $hr['origin'];
+            if (!empty($hr['variant'])) { $variant_map_detail[$hr['id']] = $hr['variant']; }
+        }
 
         // Count like & komentar (Revisi #1)
         $related = $this->M_product->attach_social_counts($related, $user_id);
+
+        // Lampirkan varian rekomendasi (warna + ukuran) ke produk terkait
+        foreach ($related as $p) {
+            if (isset($variant_map_detail[$p->id])) { $p->rec_variant = $variant_map_detail[$p->id]; }
+        }
 
         $data = [
             'title'       => $product->name . ' — JiDoor Store',

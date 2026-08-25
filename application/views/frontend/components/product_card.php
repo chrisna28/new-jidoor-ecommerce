@@ -22,6 +22,11 @@ $img = $p->image && $p->image !== 'default.jpg'
     <div class="pcard-body">
         <span class="pcard-cat"><?= htmlspecialchars($p->category_name) ?></span>
         <a href="<?= base_url('produk/' . $p->slug) ?>" class="pcard-name"><?= htmlspecialchars($p->name) ?></a>
+        <?php if (!empty($p->rec_variant)):
+            $rv_label = trim(($p->rec_variant['color'] ?? '') . ' · ' . ($p->rec_variant['size'] ?? ''), ' ·');
+            if ($rv_label !== ''): ?>
+        <span class="pcard-var" title="Varian yang cocok untuk Anda"><i class="fa-solid fa-tag"></i><?= htmlspecialchars($rv_label) ?></span>
+        <?php endif; endif; ?>
         <div class="pcard-meta">
             <span class="pcard-price tnum">Rp <?= number_format($p->price, 0, ',', '.') ?></span>
             <span class="d-flex align-items-center gap-3">
@@ -29,7 +34,7 @@ $img = $p->image && $p->image !== 'default.jpg'
                         data-like-id="<?= $p->id ?>">
                     <i class="<?= !empty($p->is_liked) ? 'fas text-danger' : 'far' ?> fa-heart"></i><span class="like-count"><?= (int)($p->like_count ?? 0) ?></span>
                 </button>
-                <span class="pcard-like" style="cursor:default;"><i class="far fa-comment"></i><?= (int)($p->comment_count ?? 0) ?></span>
+                <span class="pcard-like" style="cursor:default;"><i class="far fa-comment"></i><?= (int)($p->review_count ?? 0) ?></span>
             </span>
         </div>
     </div>

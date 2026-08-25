@@ -68,6 +68,10 @@ class RecommendationEngine:
                 queries = {
                     "r": "SELECT COUNT(*) as c, MAX(id) as m FROM ratings",
                     "o": "SELECT COUNT(*) as c, MAX(id) as m FROM orders",
+                    "oi": "SELECT COUNT(*) as c, MAX(id) as m FROM order_items",
+                    # order_tracking bertambah tiap perubahan status pesanan →
+                    # perubahan status otomatis memicu recompute model
+                    "ot": "SELECT COUNT(*) as c, MAX(id) as m FROM order_tracking",
                     "ct": "SELECT COUNT(*) as c, MAX(id) as m FROM cart",
                     "l": "SELECT COUNT(*) as c, MAX(id) as m FROM likes",
                     "v": "SELECT COUNT(*) as c, MAX(id) as m FROM product_views",
@@ -111,8 +115,8 @@ class RecommendationEngine:
                 cursor.execute("SELECT user_id, product_id, CAST(rating AS FLOAT) as rating, created_at, 'explicit' as source FROM ratings")
                 s1 = list(cursor.fetchall())
                 
-                # 2. Purchase
-                cursor.execute("SELECT o.user_id, oi.product_id, 5.0 as rating, o.created_at, 'purchase' as source FROM orders o JOIN order_items oi ON o.id = oi.order_id WHERE o.status IN ('pending', 'paid', 'shipped', 'completed')")
+                # 2. Purchase (status 'delivered' = skema sekarang; 'completed' sudah tidak dipakai)
+                cursor.execute("SELECT o.user_id, oi.product_id, 5.0 as rating, o.created_at, 'purchase' as source FROM orders o JOIN order_items oi ON o.id = oi.order_id WHERE o.status IN ('pending', 'paid', 'shipped', 'delivered')")
                 s2 = list(cursor.fetchall())
                 
                 # 3. Cart
@@ -123,8 +127,8 @@ class RecommendationEngine:
                 cursor.execute("SELECT user_id, product_id, 2.5 as rating, created_at, 'like' as source FROM likes")
                 s4 = list(cursor.fetchall())
                 
-                # 5. Product Views (Implicit)
-                cursor.execute("SELECT user_id, product_id, 1.5 as rating, created_at, 'view' as source FROM product_views")
+                # 5. Product Views (Implicit) — guest (user_id NULL) dibuang agar pivot bersih
+                cursor.execute("SELECT user_id, product_id, 1.5 as rating, created_at, 'view' as source FROM product_views WHERE user_id IS NOT NULL")
                 s5 = list(cursor.fetchall())
                 
             df = pd.DataFrame(s1 + s2 + s3 + s4 + s5)
@@ -180,6 +184,15 @@ class RecommendationEngine:
         # 2. Check Sparsity
         n_users, n_items = pivot.shape
         sparsity = 1.0 - (len(df) / (n_users * n_items))
+
+        # Hint skala data untuk auto-tuning hyperparameter (v5.4)
+        # agar mesin tetap masuk akal di data kecil DAN siap tumbuh ke data besar.
+        self.cache["scale_hint"] = {
+            "n_users": int(n_users),
+            "n_items": int(n_items),
+            "density": round(len(df) / (n_users * n_items), 4) if n_users * n_items else 0,
+            "total_signals": int(len(df)),
+        }
         
         # 3. Conditional Mean-Centering
         # Jika data sangat sparse (> 85%), Mean-Centering akan menghasilkan vektor nol (Red Flag)
@@ -359,13 +372,24 @@ class RecommendationEngine:
             # 3. Identifikasi Hybrid (Ada di kedua model)
             hybrid_ids = set(u_norm.keys()) & set(i_norm.keys())
             
-            # 4. Scoring dengan Alpha Weight (60% User Preference, 40% Item Similarity)
-            alpha = 0.6
+            # 4. Scoring dengan Alpha Weight — AUTO-TUNED v5.4
+            # Hyperparameter menyesuaikan skala data aktual:
+            #   - Data kecil (<15 user): threshold rendah agar kandidat CF benar-benar muncul,
+            #     alpha diturunkan karena User-CF kurang reliabel dengan sedikit tetangga.
+            #   - Data besar: kembali ke tuning standar (0.6 / 0.55).
+            hint = self.cache.get("scale_hint") or {}
+            n_u = hint.get("n_users", 0)
+            alpha = 0.6 if n_u >= 10 else 0.5
+            if n_u < 15:
+                base_high = 0.35
+            elif n_u < 100:
+                base_high = 0.45
+            else:
+                base_high = 0.55
             u_only = [pid for pid in u_norm if pid not in hybrid_ids]
             i_only = [pid for pid in i_norm if pid not in hybrid_ids]
-            # Thresholding untuk Elite picks (Tuned v5.2)
-            # 0.55 adalah nilai tengah yang solid setelah global normalization
-            high_threshold = 0.65 if explore_mode else 0.55
+            # Thresholding untuk Elite picks
+            high_threshold = base_high + (0.10 if explore_mode else 0.0)
             high_conf = [pid for pid in hybrid_ids if (alpha * u_norm[pid] + (1-alpha) * i_norm[pid]) > high_threshold]
             med_conf = [pid for pid in hybrid_ids if pid not in high_conf]
             

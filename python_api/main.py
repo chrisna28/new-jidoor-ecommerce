@@ -8,11 +8,12 @@ Endpoint rekomendasi real-time berbasis Pure CF (User-Based + Item-Based).
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from recommendation_engine import RecommendationEngine
+from variant_recommender import VariantRecommender
 from pydantic import BaseModel
 import time
 from typing import Optional
 
-app = FastAPI(title="JiDoor Pure CF Engine v5.3")
+app = FastAPI(title="JiDoor Pure CF Engine v5.4")
 
 # CORS
 app.add_middleware(
@@ -37,6 +38,7 @@ DB_CONFIG = {
 }
 
 engine = RecommendationEngine(DB_CONFIG)
+variant_engine = VariantRecommender(DB_CONFIG)
 
 _api_log = {"total_requests": 0, "endpoints": {}, "started_at": time.strftime("%Y-%m-%d %H:%M:%S")}
 
@@ -49,30 +51,34 @@ def log_request(endpoint: str):
 
 @app.get("/")
 def home():
-    return {"status": "online", "version": "5.3", "engine": "Pure Collaborative Filtering"}
+    return {"status": "online", "version": "5.4", "engine": "Pure Collaborative Filtering + Variant Layer"}
 
 # ==========================================================
 # RECOMMENDATION ENDPOINTS
 # ==========================================================
 
 @app.get("/recommend/{user_id}", tags=["Recommendation"])
-def get_recommendations(user_id: int, top_n: int = 8, metadata: bool = False, session_id: Optional[str] = None):
+def get_recommendations(user_id: int, top_n: int = 8, metadata: bool = False,
+                        with_variants: bool = False, session_id: Optional[str] = None):
     """
     Endpoint utama: Pure CF recommendations (User-Based + Item-Based) dengan Cold Start Handling.
+    with_variants=true → setiap rekomendasi dilengkapi varian (warna + ukuran) terbaik untuk user.
     """
     log_request("/recommend/{user_id}")
-    
+
     is_cold_start = engine.cache.get("pivot") is None or user_id not in engine.cache.get("pivot").index if user_id > 0 else True
 
     if metadata:
         recs = engine.get_hybrid_with_cold_start(user_id, top_n, session_id=session_id, return_metadata=True)
+        if with_variants:
+            recs = variant_engine.enrich(recs, user_id)
         return {
-            "user_id": user_id, 
+            "user_id": user_id,
             "recommendations": recs,
             "method": "pure_cf_v5_with_cold_start",
             "is_cold_start": is_cold_start
         }
-    
+
     product_ids = engine.get_hybrid_with_cold_start(user_id, top_n, session_id=session_id)
     return {
         "user_id": user_id,
@@ -82,13 +88,17 @@ def get_recommendations(user_id: int, top_n: int = 8, metadata: bool = False, se
     }
 
 @app.get("/recommend/sections/{user_id}", tags=["Recommendation"])
-def get_sectioned_recommendations(user_id: int, limit_per_section: int = 4):
+def get_sectioned_recommendations(user_id: int, limit_per_section: int = 4, with_variants: bool = False):
     """
     Endpoint untuk layout Home Page: Rekomendasi terbagi dalam baris (sections).
     Ditingkatkan dengan kategori variety dan fresh products.
+    with_variants=true → tiap item dilengkapi varian (warna + ukuran) terbaik.
     """
     log_request("/recommend/sections/{user_id}")
     sections = engine.get_sectioned_recs(user_id, limit_per_section)
+    if with_variants:
+        for sec in sections:
+            sec["items"] = variant_engine.enrich(sec.get("items", []), user_id)
     return {
         "user_id": user_id,
         "sections": sections,
@@ -488,9 +498,10 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
 
 @app.post("/cache/refresh", tags=["Admin"])
 def refresh_cache():
-    """Force refresh cache model CF."""
+    """Force refresh cache model CF + cache varian."""
     engine.fetch_enhanced_ratings(force=True)
     engine.compute_similarity()
+    variant_engine.invalidate()
     return {"status": "success", "message": "Cache refreshed"}
 
 if __name__ == "__main__":

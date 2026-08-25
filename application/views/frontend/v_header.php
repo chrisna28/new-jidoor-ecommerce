@@ -19,7 +19,7 @@
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- Custom Style — Editorial Luxe -->
-    <link rel="stylesheet" href="<?= base_url('assets/css/style.css?v=3.1') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/style.css?v=3.2') ?>">
 </head>
 <?php
 $uri      = uri_string();
