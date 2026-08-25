@@ -95,6 +95,7 @@ class ChatServer implements MessageComponentInterface {
                 'conversation_id' => $convId,
                 'text'            => $text,
                 'sent_at'         => date('H:i'),
+                'date'            => date('Y-m-d'),
                 'product'         => $product,
             ]);
 

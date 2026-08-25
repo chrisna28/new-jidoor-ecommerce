@@ -52,6 +52,7 @@ class Chat extends CI_Controller {
                 'role'    => $m->sender_role,
                 'text'    => $m->message,
                 'sent_at' => date('H:i', strtotime($m->created_at)),
+                'date'    => date('Y-m-d', strtotime($m->created_at)),
                 'product' => $m->product_id ? [
                     'id'    => (int)$m->product_id,
                     'name'  => $m->product_name,

@@ -12,8 +12,9 @@ from variant_recommender import VariantRecommender
 from pydantic import BaseModel
 import time
 from typing import Optional
+from collections import Counter
 
-app = FastAPI(title="JiDoor Pure CF Engine v5.4")
+app = FastAPI(title="JiDoor Pure CF Engine v5.5")
 
 # CORS
 app.add_middleware(
@@ -158,6 +159,23 @@ def get_item_recommendations(product_id: int, top_n: int = 4):
 # TRACKING — Hanya product view (implicit signal untuk CF)
 # ==========================================================
 
+@app.get("/recommend/variant/{user_id}/{product_id}", tags=["Recommendation"])
+def get_variant_recommendation(user_id: int, product_id: int):
+    """
+    Varian (warna + ukuran) terbaik untuk satu produk bagi user tertentu.
+    Dipakai halaman detail produk untuk menandai opsi yang cocok untuk user.
+    """
+    log_request("/recommend/variant/{user_id}/{product_id}")
+    profile = variant_engine.get_user_profile(user_id) if user_id > 0 else {"colors": Counter(), "sizes": Counter()}
+    popular = variant_engine.get_global_popularity()
+    try:
+        variant = variant_engine.pick_for_product(product_id, profile, popular)
+    except Exception as e:
+        logger.warning(f"Gagal pilih varian utk produk {product_id}: {e}")
+        variant = None
+    return {"product_id": product_id, "user_id": user_id, "variant": variant}
+
+
 @app.post("/track/view", tags=["Tracking"])
 def track_product_view(view: ProductView):
     """Mencatat setiap kali user melihat detail produk (Implicit Signal untuk CF)."""
@@ -212,6 +230,7 @@ def admin_stats():
             stats["total_items"] = true_total_products
     finally: conn.close()
     stats["api_log"] = _api_log
+    stats["active_params"] = engine.get_active_params()
     return {"status": "success", "data": stats}
 
 @app.get("/admin/evaluate", tags=["Admin"])
@@ -244,6 +263,36 @@ def cross_validate(folds: int = 5):
     metrics = engine.cross_validate_model(folds)
     return {"status": "success", "metrics": metrics}
 
+@app.get("/admin/rec-preview/{user_id}", tags=["Admin"])
+def admin_rec_preview(user_id: int, top_n: int = 8):
+    """
+    Preview output rekomendasi personal v5.4 untuk dashboard admin.
+    Mengembalikan barang + origin + saran varian (warna & ukuran) per user —
+    persis seperti yang diterima storefront.
+    """
+    log_request(f"/admin/rec-preview/{user_id}")
+    recs = engine.get_hybrid_with_cold_start(user_id, top_n, return_metadata=True)
+    recs = [r for r in recs if r.get('origin')]
+    recs = variant_engine.enrich(recs, user_id)
+
+    conn = engine.get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            for r in recs:
+                cursor.execute("SELECT name, price FROM products WHERE id = %s", (r["id"],))
+                p = cursor.fetchone()
+                if p:
+                    r["name"] = p["name"]
+                    r["price"] = float(p["price"])
+                else:
+                    r["name"] = f"Produk #{r['id']}"
+                    r["price"] = 0
+    finally:
+        conn.close()
+
+    return {"user_id": user_id, "items": recs}
+
+
 @app.get("/admin/cf-detail/{user_id}", tags=["Admin"])
 def get_cf_calculation_detail(user_id: int, top_n: int = 8):
     """
@@ -256,6 +305,24 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
     result = {
         "user_id": user_id,
         "steps": {}
+    }
+    
+    # ==========================================
+    # STEP 0: Parameter Aktif Model (Auto-Tuning v5.4)
+    # ==========================================
+    params = engine.get_active_params()
+    result["steps"]["0_params"] = {
+        "title": "Step 0: Parameter Aktif Model (Auto-Tuning)",
+        "description": f"Hyperparameter menyesuaikan skala data otomatis — kelas skala saat ini: {params['scale_class']}.",
+        "data": [
+            {"parameter": "Kelas Skala Data", "nilai": params["scale_class"]},
+            {"parameter": "User × Produk (dalam model)", "nilai": f"{params['n_users']} × {params['n_items']}"},
+            {"parameter": "Kerapatan Matriks", "nilai": f"{params['density_pct']}%"},
+            {"parameter": "Total Sinyal", "nilai": params["total_signals"]},
+            {"parameter": "Alpha (bobot User-CF)", "nilai": params["alpha_user_cf"]},
+            {"parameter": "Threshold High-Confidence", "nilai": params["base_threshold"]},
+            {"parameter": "K tetangga KNN", "nilai": min(params["knn_k"], params["n_users"]) if params["n_users"] else 0},
+        ]
     }
     
     # ==========================================
@@ -312,7 +379,7 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
         
         result["steps"]["2_normalization"] = {
             "title": "Step 2: Rating Normalization (Mean-Centering)",
-            "description": "Mengurangi rating dengan rata-rata user (v5.3 pure math).",
+            "description": "Mengurangi rating dengan rata-rata user — hanya aktif bila sparsity < 85% (kondisional v5.4).",
             "formula": "Normalized(r) = r - average(user_ratings)",
             "data": step2_data
         }
@@ -408,9 +475,9 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
         item_sim_data.sort(key=lambda x: x['similarity_score'], reverse=True)
         
         result["steps"]["4_item_similarity"] = {
-            "title": "Step 4: Item-Item Similarity (Penalized)",
-            "description": f"Produk terdekat menggunakan Cosine Similarity dengan Co-occurrence Penalty.",
-            "formula": "FinalSim = CosineSim * min(CoOccurrence/3, 1.0)",
+            "title": "Step 4: Item-Item Similarity (Shrinkage)",
+            "description": f"Produk terdekat menggunakan Cosine Similarity dengan Significance Shrinkage (λ={engine.cache.get('shrinkage_lambda', 3)}).",
+            "formula": "FinalSim = CosineSim × CoOccurrence / (CoOccurrence + λ)",
             "data": item_sim_data
         }
     else:
@@ -421,11 +488,14 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
         }
     
     # ==========================================
-    # STEP 5: Score Aggregation & Normalization
+    # STEP 5: Score Aggregation (Weighted Alpha — Auto-Tuned v5.4)
     # ==========================================
     u_raw_scores = engine._get_user_recs(user_id, top_n * 3)
     i_raw_scores = engine._get_item_recs(user_id, top_n * 3)
     u_norm, i_norm = engine._normalize_scores_global(u_raw_scores, i_raw_scores)
+    
+    alpha = params["alpha_user_cf"]
+    thr = params["base_threshold"]
     
     # FILTER: Hanya ambil produk yang memiliki skor positif (> 0) di salah satu model
     valid_pids = set()
@@ -438,32 +508,45 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
     for pid in valid_pids:
         un = u_norm.get(pid, 0)
         inorm = i_norm.get(pid, 0)
-        total = (un + inorm) / 2.0
+        hybrid = un > 0 and inorm > 0
+        total = alpha * un + (1 - alpha) * inorm
         
-        # Labeling Informatif v5.4
-        if un > 0 and inorm > 0:
-            origin = "BEST MATCH"      # Kedua model setuju
+        # Label & confidence mengikuti logika engine v5.4
+        if hybrid and total > thr:
+            origin, conf = "BEST MATCH", "HIGH"
+        elif hybrid:
+            origin, conf = "MED MATCH", "MEDIUM"
         elif un > 0:
-            origin = "FOR YOU"         # Hanya User-Based
-        elif inorm > 0:
-            origin = "STYLE MATCH"     # Hanya Item-Based
+            origin, conf = "FOR YOU", "USER-ONLY"
         else:
-            origin = "UNCATEGORIZED"
+            origin, conf = "STYLE MATCH", "ITEM-ONLY"
             
         score_data.append({
             "product": all_pnames.get(pid, f"ID {pid}"),
             "user_score_0_1": round(float(un), 4),
             "item_score_0_1": round(float(inorm), 4),
+            "hybrid": "Ya" if hybrid else "Tidak",
             "final_score": round(float(total), 4),
+            "confidence": conf,
             "origin": origin
         })
     
     score_data.sort(key=lambda x: x['final_score'], reverse=True)
     
     result["steps"]["5_aggregation"] = {
-        "title": "Step 5: Score Aggregation & Normalization",
-        "description": "Daftar seluruh produk dengan skor kecocokan AI (Informatif).",
-        "formula": "Final = (NormUserScore + NormItemScore) / 2",
+        "title": "Step 5: Score Aggregation (Weighted Alpha)",
+        "description": (
+            f"Skor akhir = {alpha} × UserScore + {round(1 - alpha, 2)} × ItemScore "
+            f"(normalisasi per-model terpisah). "
+            f"Hybrid dengan skor > {thr} masuk kelas HIGH (sesuai auto-tuning skala data)."
+            if score_data else
+            f"CF belum menghasilkan kandidat untuk user ini (data terlalu kecil — KNN butuh > 3 user & produk). "
+            f"Sistem otomatis memakai popularitas pada Step 6. Parameter aktif: alpha={alpha}, threshold={thr}."
+        ),
+        "formula": (
+            "UserCF: pred = μᵤ + Σ s·(r−μᵥ)/Σ|s| · ItemCF: score = Σ sim·r/Σ sim · "
+            f"Final = {alpha}·NormUser + {round(1 - alpha, 2)}·NormItem"
+        ),
         "data": score_data
     }
     
@@ -475,6 +558,9 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
     
     # FILTER: Hanya tampilkan yang memiliki Origin (Elite Only)
     final_recs = [r for r in raw_final_recs if r.get('origin') is not None]
+    
+    # Lapisan varian v5.4: sarankan warna + ukuran terbaik per user
+    final_recs = variant_engine.enrich(final_recs, user_id)
     
     conn = engine.get_db_connection()
     try:
@@ -489,8 +575,8 @@ def get_cf_calculation_detail(user_id: int, top_n: int = 8):
         conn.close()
     
     result["steps"]["6_final_result"] = {
-        "title": "Step 6: Mixed Hybrid Recommendations",
-        "description": f"Hasil akhir: Rekomendasi Personal (Uncapped) + Produk Populer (Elite Top 5).",
+        "title": "Step 6: Mixed Hybrid + Lapisan Varian",
+        "description": f"Hasil akhir: Rekomendasi Personal (Uncapped) + Produk Populer, masing-masing dilengkapi varian warna & ukuran terbaik untuk user.",
         "data": final_recs
     }
     

@@ -70,8 +70,22 @@ $has_thread = !empty($conv);
             <?php if (empty($history)): ?>
                 <div class="text-center text-muted py-5">Belum ada pesan.</div>
             <?php endif ?>
-            <?php foreach ($history as $m): ?>
-                <div class="d-flex mb-2 <?= $m->sender_role === 'admin' ? 'justify-content-end' : 'justify-content-start' ?>">
+            <?php
+            $last_date = null;
+            $today = date('Y-m-d');
+            $yesterday = date('Y-m-d', strtotime('-1 day'));
+            $bln = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            foreach ($history as $m):
+                $cur_date = date('Y-m-d', strtotime($m->created_at));
+                if ($cur_date !== $last_date):
+                    $last_date = $cur_date;
+                    if ($cur_date === $today) { $dl = 'Hari Ini'; }
+                    elseif ($cur_date === $yesterday) { $dl = 'Kemarin'; }
+                    else { $dl = date('j', strtotime($m->created_at)) . ' ' . $bln[(int)date('n', strtotime($m->created_at)) - 1] . ' ' . date('Y', strtotime($m->created_at)); }
+            ?>
+                <div class="d-flex justify-content-center my-2"><span class="chat-date-divider"><?= $dl ?></span></div>
+            <?php endif; ?>
+                <div class="d-flex mb-2 <?= $m->sender_role === 'admin' ? 'justify-content-end' : 'justify-content-start' ?>" data-date="<?= $cur_date ?>">
                     <div class="chat-bubble <?= $m->sender_role === 'admin' ? 'admin' : 'customer' ?>">
                         <?php if (!empty($m->product_id)): ?>
                             <!-- Kartu konteks produk ala Shopee -->
@@ -155,6 +169,32 @@ $has_thread = !empty($conv);
             const fmtPrice = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
             const escHtml = s => String(s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 
+            // ===== Pemisah tanggal (bubble per hari) =====
+            const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            function todayKey() {
+                const n = new Date();
+                return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+            }
+            function dateLabel(d) {
+                const today = todayKey();
+                const y = new Date(); y.setDate(y.getDate() - 1);
+                const yesterday = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+                if (d === today) return 'Hari Ini';
+                if (d === yesterday) return 'Kemarin';
+                const p = String(d).split('-');
+                return parseInt(p[2], 10) + ' ' + MONTHS[parseInt(p[1], 10) - 1] + ' ' + p[0];
+            }
+            function dateDivider(label) {
+                const el = document.createElement('div');
+                el.className = 'd-flex justify-content-center my-2';
+                el.innerHTML = '<span class="chat-date-divider">' + label + '</span>';
+                msgBox.appendChild(el);
+            }
+            // Lanjutkan pengelompokan dari tanggal terakhir yang dirender server
+            let lastDate = null;
+            const datedMsgs = msgBox.querySelectorAll('[data-date]');
+            if (datedMsgs.length) { lastDate = datedMsgs[datedMsgs.length - 1].getAttribute('data-date'); }
+
             function productCardHtml(p) {
                 const img = p.image ? '<?= base_url("uploads/products/") ?>' + escHtml(p.image)
                                     : 'https://placehold.co/72x72/f1f5f9/94a3b8?text=%3F';
@@ -166,10 +206,12 @@ $has_thread = !empty($conv);
                        '</span></a>';
             }
 
-            function bubble(role, text, time, product) {
+            function bubble(role, text, time, product, date) {
                 const mine = role === 'admin';
+                if (date && date !== lastDate) { dateDivider(dateLabel(date)); lastDate = date; }
                 const wrap = document.createElement('div');
                 wrap.className = 'd-flex mb-2 ' + (mine ? 'justify-content-end' : 'justify-content-start');
+                if (date) { wrap.setAttribute('data-date', date); }
                 wrap.innerHTML =
                     '<div class="chat-bubble ' + (mine ? 'admin' : 'customer') + '">' +
                     (product ? productCardHtml(product) : '') +
@@ -192,7 +234,7 @@ $has_thread = !empty($conv);
                     const d = JSON.parse(e.data);
                     // Hanya tampilkan pesan percakapan yang sedang dibuka
                     if (d.type === 'message' && d.conversation_id === CONV_ID) {
-                        bubble(d.role, d.text, d.sent_at, d.product);
+                        bubble(d.role, d.text, d.sent_at, d.product, d.date);
                     }
                 };
 
@@ -269,7 +311,7 @@ $has_thread = !empty($conv);
                     const payload = { type: 'message', conversation_id: CONV_ID, text: text };
                     if (pendingProduct) { payload.product_id = pendingProduct.id; }
                     ws.send(JSON.stringify(payload));
-                    bubble('admin', text, now, pendingProduct);
+                    bubble('admin', text, now, pendingProduct, todayKey());
                     clearPending();
                 } else {
                     showToast('Server chat belum berjalan. Jalankan "php chat-server.php" lalu coba lagi.', 'error');

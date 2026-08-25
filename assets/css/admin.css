@@ -962,6 +962,19 @@ select.form-select-admin, select.form-control-admin {
 }
 .chat-time { font-size: 0.65rem; text-align: right; opacity: 0.65; margin-top: 3px; }
 
+/* Pemisah tanggal pada chat (admin) */
+.chat-date-divider {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
 /* Kartu konteks produk di dalam bubble */
 .chat-prodcard {
     display: flex;

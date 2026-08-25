@@ -32,8 +32,34 @@
     const statusEl = document.getElementById('pageChatStatus');
     const form     = document.getElementById('pageChatForm');
     const input    = document.getElementById('pageChatInput');
+    let lastDate   = null;
 
-    function bubble(role, text, time) {
+    const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+    function todayKey() {
+        const n = new Date();
+        return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+    }
+
+    function dateLabel(d) {
+        const today = todayKey();
+        const y = new Date(); y.setDate(y.getDate() - 1);
+        const yesterday = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+        if (d === today) return 'Hari Ini';
+        if (d === yesterday) return 'Kemarin';
+        const p = String(d).split('-');
+        return parseInt(p[2], 10) + ' ' + MONTHS[parseInt(p[1], 10) - 1] + ' ' + p[0];
+    }
+
+    function divider(label) {
+        const el = document.createElement('div');
+        el.className = 'd-flex justify-content-center my-3';
+        el.innerHTML = '<span class="chat-date-divider">' + label + '</span>';
+        msgBox.appendChild(el);
+    }
+
+    function bubble(role, text, time, date) {
+        if (date && date !== lastDate) { divider(dateLabel(date)); lastDate = date; }
         const mine = role === 'user';
         const wrap = document.createElement('div');
         wrap.className = 'd-flex mb-2 ' + (mine ? 'justify-content-end' : 'justify-content-start');
@@ -50,7 +76,7 @@
     fetch('<?= site_url("chat/history") ?>')
         .then(r => r.json())
         .then(res => {
-            (res.messages || []).forEach(m => bubble(m.role, m.text, m.sent_at));
+            (res.messages || []).forEach(m => bubble(m.role, m.text, m.sent_at, m.date));
             if (!(res.messages || []).length) {
                 msgBox.innerHTML = '<div class="text-center text-muted py-5">Belum ada pesan.<br>Sapa admin kami!</div>';
             }
@@ -65,7 +91,7 @@
         };
         ws.onmessage = (e) => {
             const d = JSON.parse(e.data);
-            if (d.type === 'message') { bubble(d.role, d.text, d.sent_at); }
+            if (d.type === 'message') { bubble(d.role, d.text, d.sent_at, d.date); }
         };
         ws.onclose = () => {
             statusEl.textContent = 'Admin tidak sedang online — tinggalkan pesan';
@@ -82,13 +108,13 @@
 
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'message', text: text }));
-            bubble('user', text, new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}));
+            bubble('user', text, new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}), todayKey());
         } else {
             const fd = new FormData();
             fd.append('message', text);
             fetch('<?= site_url("chat/offline_message") ?>', { method: 'POST', body: fd })
                 .then(r => r.json())
-                .then(() => bubble('user', text, new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})));
+                .then(() => bubble('user', text, new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}), todayKey()));
         }
     });
 

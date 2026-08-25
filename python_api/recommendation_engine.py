@@ -127,8 +127,16 @@ class RecommendationEngine:
                 cursor.execute("SELECT user_id, product_id, 2.5 as rating, created_at, 'like' as source FROM likes")
                 s4 = list(cursor.fetchall())
                 
-                # 5. Product Views (Implicit) — guest (user_id NULL) dibuang agar pivot bersih
-                cursor.execute("SELECT user_id, product_id, 1.5 as rating, created_at, 'view' as source FROM product_views WHERE user_id IS NOT NULL")
+                # 5. Product Views (Implicit) — guest (user_id NULL/0) dibuang agar pivot bersih.
+                #    Cap v5.5: view berulang dihitung maks 3 per user×item (GROUP BY + LEAST)
+                #    agar heavy viewer tidak mendominasi sinyal.
+                cursor.execute("""
+                    SELECT user_id, product_id, LEAST(COUNT(*), 3) * 1.5 as rating,
+                           MAX(created_at) as created_at, 'view' as source
+                    FROM product_views
+                    WHERE user_id IS NOT NULL AND user_id > 0
+                    GROUP BY user_id, product_id
+                """)
                 s5 = list(cursor.fetchall())
                 
             df = pd.DataFrame(s1 + s2 + s3 + s4 + s5)
@@ -171,12 +179,15 @@ class RecommendationEngine:
     # SIMILARITY COMPUTATION — Cosine Similarity
     # ==========================================================
 
-    def compute_similarity(self, min_co_occurrence: int = 1):
+    def compute_similarity(self, shrinkage_lambda: int = 3):
         """
-        Menghitung matrix similarity dengan Conditional Mean-Centering dan Co-occurrence Penalty.
+        Menghitung matrix similarity dengan Conditional Mean-Centering dan
+        Significance Shrinkage (v5.5, Herlocker et al.): sim' = sim · n/(n+λ).
+        λ memperlemah pasangan yang hanya didukung sedikit user bersama.
         """
         df = self.fetch_enhanced_ratings()
         if df.empty: return
+        self.cache["shrinkage_lambda"] = shrinkage_lambda
         
         # 1. Pivot Table (missing = NaN)
         pivot = df.pivot_table(index="user_id", columns="product_id", values="rating")
@@ -214,11 +225,12 @@ class RecommendationEngine:
         item_sim_matrix = cosine_similarity(pivot_centered.T)
         item_sim_matrix = np.nan_to_num(item_sim_matrix, nan=0.0)
         
-        # --- PENALTY LOGIC ---
-        # Berikan penalti pada pasangan produk yang hanya memiliki co-occurrence rendah
-        # Jika hanya 1 user yang sama, skor similarity dipotong menjadi 1/3 (0.33)
-        penalty = np.clip(co_matrix / 3.0, 0.2, 1.0) 
-        item_sim_matrix = item_sim_matrix * penalty
+        # --- SIGNIFICANCE SHRINKAGE (v5.5) ---
+        # Kanonik: sim' = sim · n/(n+λ). Halus & berbasis bukti — pasangan dengan
+        # 1 user bersama hanya dipertahankan ~25% (λ=3), dan mendekati penuh saat n besar.
+        lam = shrinkage_lambda
+        shrink = co_matrix / (co_matrix + lam)
+        item_sim_matrix = item_sim_matrix * shrink
         
         # 5. User-User Similarity (Gunakan logika yang sama)
         user_sim_matrix = cosine_similarity(pivot_centered)
@@ -235,8 +247,9 @@ class RecommendationEngine:
         n_neighbors_user = min(16, n_users)
         knn_user = NearestNeighbors(n_neighbors=n_neighbors_user, metric='cosine', algorithm='brute')
         if pivot_centered.shape[0] > 0:
-            # Minimal samples check (v5.1 Stability Fix)
-            if pivot_centered.shape[0] > 3 and pivot_centered.shape[1] > 3:
+            # Minimal samples check — v5.5: cukup ≥2 user & ≥2 produk
+            # agar pasangan tetangga tetap bermakna di data kecil.
+            if pivot_centered.shape[0] >= 2 and pivot_centered.shape[1] >= 2:
                 knn_user.fit(csr_matrix(pivot_centered.values))
                 self.cache["knn_user"] = knn_user # Fix v5.2: Move inside if
             else:
@@ -257,7 +270,9 @@ class RecommendationEngine:
 
     def _get_user_recs(self, user_id: int, top_n: int) -> Dict[int, float]:
         """
-        User-Based CF: Menggunakan KNN untuk mencari pengguna serupa.
+        User-Based CF — formula kanonik (v5.5, sesuai literatur KNN-CF):
+            pred(u,i) = mu_u + Σ s(u,v)·(r(v,i) − mu_v) / Σ|s(u,v)|
+        Output = affinity 0..1: seberapa jauh prediksi di atas titik netral (3.0).
         """
         pivot = self.cache.get("pivot")
         pivot_centered = self.cache.get("pivot_centered")
@@ -271,8 +286,11 @@ class RecommendationEngine:
         
         user_rated = pivot.loc[user_id]
         unrated = user_rated[user_rated == 0].index
+        own_ratings = user_rated[user_rated > 0]
+        mu_u = float(own_ratings.mean()) if len(own_ratings) else 0.0
         
-        recommendations = {}
+        num: Dict[int, float] = {}
+        den: Dict[int, float] = {}
         for i, neighbor_idx in enumerate(indices[0]):
             sim_score = 1 - distances[0][i]
             if sim_score <= 0.05: continue
@@ -280,32 +298,42 @@ class RecommendationEngine:
             other_user = pivot_centered.index[neighbor_idx]
             if other_user == user_id: continue
             
-            other_user_ratings = pivot.loc[other_user]
+            other_ratings = pivot.loc[other_user]
+            other_centered = pivot_centered.loc[other_user]
+            
             for prod_id in unrated:
-                if other_user_ratings[prod_id] > 0:
-                    recommendations[prod_id] = recommendations.get(prod_id, 0) + (sim_score * other_user_ratings[prod_id])
+                if other_ratings[prod_id] > 0:
+                    num[prod_id] = num.get(prod_id, 0.0) + sim_score * float(other_centered[prod_id])
+                    den[prod_id] = den.get(prod_id, 0.0) + abs(sim_score)
         
-        sorted_recs = dict(sorted(recommendations.items(), key=lambda x: x[1], reverse=True))
-        return sorted_recs
+        # Prediksi ter-normalisasi denominasi → affinity (skala rating 1-5)
+        scores: Dict[int, float] = {}
+        for prod_id in num:
+            if den[prod_id] < 1e-9: continue
+            pred = mu_u + (num[prod_id] / den[prod_id])
+            affinity = max(0.0, min(1.0, (pred - 3.0) / 2.0))
+            if affinity > 0:
+                scores[prod_id] = affinity
+        
+        return dict(sorted(scores.items(), key=lambda x: x[1], reverse=True))
 
     def _normalize_scores_global(self, u_scores: Dict[int, float], i_scores: Dict[int, float]):
-        """Normalisasi User-CF dan Item-CF secara global agar sebanding (Scaling 0.0 - 1.0)"""
-        all_values = list(u_scores.values()) + list(i_scores.values())
-        if not all_values:
-            return {}, {}
+        """
+        Normalisasi PER-MODEL terpisah (v5.5): masing-masing model diskalakan ke 0-1
+        dengan rentangnya sendiri, sehingga tidak ada model yang menenggelamkan
+        model lain saat di-blend dengan alpha (praktik standar hybrid CF).
+        """
+        def scale_own(scores: Dict[int, float]) -> Dict[int, float]:
+            if not scores:
+                return {}
+            vals = list(scores.values())
+            mn, mx = min(vals), max(vals)
+            if mx == mn:
+                # Kandidat tunggal = keyakinan penuh; beberapa kandidat seri = titik tengah
+                return {k: (1.0 if len(scores) == 1 else 0.5) for k in scores}
+            return {k: (v - mn) / (mx - mn) for k, v in scores.items()}
         
-        min_val = min(all_values)
-        max_val = max(all_values)
-        
-        if max_val == min_val:
-            return {k: 0.5 for k in u_scores}, {k: 0.5 for k in i_scores}
-        
-        def scale(v):
-            return (v - min_val) / (max_val - min_val)
-        
-        u_norm = {k: scale(v) for k, v in u_scores.items()}
-        i_norm = {k: scale(v) for k, v in i_scores.items()}
-        return u_norm, i_norm
+        return scale_own(u_scores), scale_own(i_scores)
 
     def _normalize_scores(self, scores: Dict[int, float]) -> Dict[int, float]:
         """Backward compatibility for single score normalization"""
@@ -317,36 +345,83 @@ class RecommendationEngine:
 
     def _get_item_recs(self, user_id: int, top_n: int) -> Dict[int, float]:
         """
-        Item-Based CF: Mencari produk serupa menggunakan matrix similarity di cache.
+        Item-Based CF — formula kanonik (v5.5):
+            score(j) = Σ_{i ∈ profil} sim(i,j)·r(u,i) / Σ sim(i,j)
+        dibatasi top-K tetangga per item profil (K adaptif, selaras Parameter Aktif).
+        Output = affinity 0..1 di atas titik netral (3.0).
         """
         pivot = self.cache.get("pivot")
         item_sim_df = self.cache.get("item_sim")
         if item_sim_df is None or user_id not in pivot.index: return {}
         
         user_ratings = pivot.loc[user_id]
-        high_rated = user_ratings[user_ratings >= 3].index
+        interacted = user_ratings[user_ratings > 0].index
         unrated = user_ratings[user_ratings == 0].index
         
-        scores = {}
-        for pid in high_rated:
+        hint = self.cache.get("scale_hint") or {}
+        k_neighbors = max(min(16, int(hint.get("n_items", 16)) - 1), 1)
+        
+        num: Dict[int, float] = {}
+        den: Dict[int, float] = {}
+        for pid in interacted:
             if pid not in item_sim_df.index: continue
+            r_ui = float(user_ratings[pid])
             
-            # Ambil item paling mirip dengan produk pid (tanpa limit agar simulasi lengkap)
-            sim_items = item_sim_df[pid].sort_values(ascending=False)
+            # Top-K tetangga termirip (menggantikan cutoff 0.1 yang kaku)
+            sim_items = (
+                item_sim_df[pid]
+                .drop(index=pid, errors="ignore")
+                .sort_values(ascending=False)
+                .head(k_neighbors)
+            )
             
             for sim_pid, sim_score in sim_items.items():
-                if sim_pid == pid: continue
-                if sim_score <= 0.1: continue
-                
+                if sim_score <= 0: continue
                 if sim_pid in unrated:
-                    scores[sim_pid] = scores.get(sim_pid, 0) + (sim_score * user_ratings[pid])
+                    num[sim_pid] = num.get(sim_pid, 0.0) + sim_score * r_ui
+                    den[sim_pid] = den.get(sim_pid, 0.0) + abs(sim_score)
         
-        sorted_scores = dict(sorted(scores.items(), key=lambda x: x[1], reverse=True))
-        return sorted_scores
+        scores: Dict[int, float] = {}
+        for prod_id in num:
+            if den[prod_id] < 1e-9: continue
+            affinity = max(0.0, min(1.0, (num[prod_id] / den[prod_id] - 3.0) / 2.0))
+            if affinity > 0:
+                scores[prod_id] = affinity
+        
+        return dict(sorted(scores.items(), key=lambda x: x[1], reverse=True))
 
     # ==========================================================
     # HYBRID RECOMMENDATION — Pure CF (User + Item + Popular)
     # ==========================================================
+
+    def get_active_params(self) -> Dict[str, Any]:
+        """
+        Hyperparameter aktif hasil auto-tuning v5.4.
+        Satu sumber kebenaran untuk engine DAN dashboard admin agar selalu konsisten.
+        """
+        hint = self.cache.get("scale_hint") or {}
+        n_u = hint.get("n_users", 0)
+        n_i = hint.get("n_items", 0)
+
+        alpha = 0.6 if n_u >= 10 else 0.5
+        if n_u < 15:
+            base_high = 0.35
+        elif n_u < 100:
+            base_high = 0.45
+        else:
+            base_high = 0.55
+
+        return {
+            "n_users": int(n_u),
+            "n_items": int(n_i),
+            "density_pct": round((hint.get("density") or 0) * 100, 1),
+            "total_signals": int(hint.get("total_signals") or 0),
+            "alpha_user_cf": alpha,
+            "base_threshold": base_high,
+            "knn_k": min(16, max(n_u - 1, 1)) if n_u > 1 else 0,
+            "shrinkage_lambda": self.cache.get("shrinkage_lambda", 3),
+            "scale_class": "kecil" if n_u < 15 else ("menengah" if n_u < 100 else "besar"),
+        }
 
     def get_hybrid_recs(self, user_id: int, top_n: int = 8, 
                         explore_mode: bool = False, 
@@ -373,19 +448,13 @@ class RecommendationEngine:
             hybrid_ids = set(u_norm.keys()) & set(i_norm.keys())
             
             # 4. Scoring dengan Alpha Weight — AUTO-TUNED v5.4
-            # Hyperparameter menyesuaikan skala data aktual:
+            # Hyperparameter menyesuaikan skala data aktual (lihat get_active_params):
             #   - Data kecil (<15 user): threshold rendah agar kandidat CF benar-benar muncul,
             #     alpha diturunkan karena User-CF kurang reliabel dengan sedikit tetangga.
             #   - Data besar: kembali ke tuning standar (0.6 / 0.55).
-            hint = self.cache.get("scale_hint") or {}
-            n_u = hint.get("n_users", 0)
-            alpha = 0.6 if n_u >= 10 else 0.5
-            if n_u < 15:
-                base_high = 0.35
-            elif n_u < 100:
-                base_high = 0.45
-            else:
-                base_high = 0.55
+            params = self.get_active_params()
+            alpha = params["alpha_user_cf"]
+            base_high = params["base_threshold"]
             u_only = [pid for pid in u_norm if pid not in hybrid_ids]
             i_only = [pid for pid in i_norm if pid not in hybrid_ids]
             # Thresholding untuk Elite picks
@@ -393,8 +462,10 @@ class RecommendationEngine:
             high_conf = [pid for pid in hybrid_ids if (alpha * u_norm[pid] + (1-alpha) * i_norm[pid]) > high_threshold]
             med_conf = [pid for pid in hybrid_ids if pid not in high_conf]
             
-            random.seed(user_id + int(time.time() / 1800))
-            
+            # Seed DETERMINISTIK (v5.4 fix konsistensi): hanya berubah bila DATA berubah,
+            # bukan mengikuti jam — hasil preview & katalog stabil selama data tetap.
+            random.seed(f"{user_id}|{self.get_db_signature()}")
+
             selected = []
             used_ids = set()
             
@@ -437,9 +508,8 @@ class RecommendationEngine:
                     trending = self.get_popular_ids(top_n)
                     add_to_selected(trending, top_n - len(selected))
             
-            # Final Jitter (Hanya jika limit kecil, untuk katalog)
-            if top_n < 50:
-                random.shuffle(selected)
+            # v5.4: TANPA shuffle pada mode normal — urutan prioritas dipertahankan
+            # agar hasil konsisten (deterministik) selama data tidak berubah.
             
             selected = selected[:top_n]
             # Track origins for metadata
@@ -842,21 +912,21 @@ class RecommendationEngine:
                     FROM order_items oi
                     JOIN orders o ON o.id = oi.order_id
                     JOIN products p ON p.id = oi.product_id
-                    WHERE o.status IN ('pending', 'paid', 'shipped', 'completed')
+                    WHERE o.status IN ('pending', 'paid', 'shipped', 'delivered')
                     GROUP BY oi.product_id
-                    ORDER BY total_sold DESC
+                    ORDER BY total_sold DESC, oi.product_id ASC
                     LIMIT %s
                 """, (limit,))
                 results = [r['product_id'] for r in cursor.fetchall()]
                 
                 # 2. Fallback ke rating tertinggi
                 if len(results) < limit:
-                    cursor.execute("SELECT product_id FROM ratings GROUP BY product_id ORDER BY AVG(rating) DESC, COUNT(id) DESC LIMIT %s", (limit,))
+                    cursor.execute("SELECT product_id FROM ratings GROUP BY product_id ORDER BY AVG(rating) DESC, COUNT(id) DESC, product_id ASC LIMIT %s", (limit,))
                     results.extend([r['product_id'] for r in cursor.fetchall() if r['product_id'] not in results])
                     
-                # 3. Fallback ke random products
+                # 3. Fallback deterministik ke produk terbaru (v5.4: tanpa RAND())
                 if len(results) < limit:
-                    cursor.execute("SELECT id as product_id FROM products ORDER BY RAND() LIMIT %s", (limit,))
+                    cursor.execute("SELECT id as product_id FROM products ORDER BY created_at DESC, id ASC LIMIT %s", (limit,))
                     results.extend([r['product_id'] for r in cursor.fetchall() if r['product_id'] not in results])
                     
                 return results[:limit]
@@ -871,7 +941,7 @@ class RecommendationEngine:
                     SELECT product_id, COUNT(*) as view_count
                     FROM product_views
                     GROUP BY product_id
-                    ORDER BY view_count DESC
+                    ORDER BY view_count DESC, product_id ASC
                     LIMIT %s
                 """, (limit,))
                 return [r['product_id'] for r in cursor.fetchall()]
@@ -887,9 +957,9 @@ class RecommendationEngine:
                     SELECT oi.product_id, SUM(oi.qty) as total_sold
                     FROM order_items oi
                     JOIN orders o ON o.id = oi.order_id
-                    WHERE o.status IN ('pending', 'paid', 'shipped', 'completed')
+                    WHERE o.status IN ('pending', 'paid', 'shipped', 'delivered')
                     GROUP BY oi.product_id
-                    ORDER BY total_sold DESC
+                    ORDER BY total_sold DESC, oi.product_id ASC
                     LIMIT %s
                 """, (limit,))
                 return [r['product_id'] for r in cursor.fetchall()]
@@ -962,9 +1032,10 @@ class RecommendationEngine:
             
             shown_ids = set()
             sections = []
-            random.seed(user_id + int(time.time() / 3600))
             
-            # Helper untuk mengisi section dengan variety kategori
+            # Helper untuk mengisi section dengan variety kategori.
+            # Item tetap dalam urutan relevansi (pool sudah di-sort desc),
+            # tanpa shuffle — sehingga produk TERBAIK selalu di posisi teratas.
             def fill_section(pool_ids, max_per_cat=2):
                 items = []
                 cat_counts = {}
@@ -983,7 +1054,6 @@ class RecommendationEngine:
                             items.append(pid)
                             if len(items) >= limit_per_section: break
                 
-                random.shuffle(items)
                 shown_ids.update(items)
                 return items
 
@@ -1021,7 +1091,7 @@ class RecommendationEngine:
                 if p_int in tr_ids: return "TRENDING"
                 return None
 
-            # 1. Hybrid Section — produk yang muncul di KEDUA CF
+            # 1. Personalized (Hybrid) — produk yang muncul di KEDUA model CF
             hybrid_sorted = sorted(hybrid_ids, key=lambda x: u_norm[x] + i_norm[x], reverse=True)
             # Ambil separuh untuk Hybrid, sisanya distribusikan ke User/Item section
             hybrid_for_section = hybrid_sorted[:max(len(hybrid_sorted) // 2, 1)]
@@ -1035,7 +1105,7 @@ class RecommendationEngine:
                     "items": [{"id": int(pid), "origin": get_item_origin(pid)} for pid in hybrid_items]
                 })
 
-            # 2. Item-Based Section — produk dari Item CF (termasuk sisa hybrid)
+            # 2. Item-Based — produk dari Item CF (kontekstual: "karena Anda menyukai")
             last_viewed = self.get_last_viewed_product(user_id)
             i_pool = list(i_only_ids) + [pid for pid in hybrid_remainder if pid not in shown_ids]
             i_pool_sorted = sorted(i_pool, key=lambda x: i_norm.get(x, 0), reverse=True)
@@ -1048,7 +1118,7 @@ class RecommendationEngine:
                     "items": [{"id": int(pid), "origin": get_item_origin(pid)} for pid in item_items]
                 })
 
-            # 3. User-Based Section — produk dari User CF (termasuk sisa hybrid)
+            # 3. User-Based — produk dari User CF (sosial)
             u_pool = list(u_only_ids) + [pid for pid in hybrid_remainder if pid not in shown_ids]
             u_pool_sorted = sorted(u_pool, key=lambda x: u_norm.get(x, 0), reverse=True)
             user_items = fill_section(u_pool_sorted)
@@ -1059,7 +1129,7 @@ class RecommendationEngine:
                     "items": [{"id": int(pid), "origin": get_item_origin(pid)} for pid in user_items]
                 })
 
-            # 5. Trending Section
+            # 4. Trending
             pop_ids = self.get_popular_ids(limit=50)
             trending_items = fill_section(pop_ids)
             if trending_items:
@@ -1069,7 +1139,7 @@ class RecommendationEngine:
                     "items": [{"id": int(pid), "origin": "Trending Now"} for pid in trending_items]
                 })
 
-            # 6. New Arrivals
+            # 5. New Arrivals
             new_items = self.get_new_arrivals(limit=limit_per_section)
             new_filtered = [pid for pid in new_items if pid not in shown_ids]
             if new_filtered:
@@ -1164,11 +1234,144 @@ class RecommendationEngine:
                 "mae": round(float(mae), 4),
                 "rmse": round(float(rmse), 4),
                 "samples": len(actuals),
-                "k_used": current_k
+                "k_used": current_k,
+                "eligible": len(actuals) >= 10
             }
         except Exception as e:
             logger.error(f"Error in evaluate_model: {e}")
-            return {"mae": 0.0, "rmse": 0.0, "samples": 0}
+            return {"mae": 0.0, "rmse": 0.0, "samples": 0, "eligible": False}
+
+    def evaluate_ranking(self, k: int = 5) -> Dict[str, Any]:
+        """
+        Evaluasi Ranking Top-N (v5.5) — praktik standar untuk sistem rekomendasi
+        dengan dominan sinyal implisit (ref: Microsoft Recommenders / SAR):
+          - Split leave-last-out: interaksi TERAKHIR tiap user jadi test set.
+          - Model dilatih ulang pada sisanya, lalu diperingkat untuk kandidat unseen.
+          - Metrik: Precision@K, Recall@K, NDCG@K (relevansi biner, remove seen).
+        Catatan: pada leave-one-out Recall@K ≡ Hit-Rate@K.
+        """
+        empty = {
+            "precision_at_k": None, "recall_at_k": None, "ndcg_at_k": None,
+            "k": k, "eval_users": 0, "eligible": False,
+            "reason": "Data interaksi belum cukup untuk evaluasi ranking (butuh ≥5 user dengan ≥2 interaksi)"
+        }
+        
+        try:
+            df = self.fetch_enhanced_ratings()
+            if df.empty or 'created_at' not in df.columns: return empty
+            
+            # --- Leave-last-out split ---
+            df_sorted = df.sort_values(['user_id', 'created_at'])
+            test_rows = df_sorted.groupby('user_id').tail(1)
+            train_df = df_sorted.drop(test_rows.index)
+            
+            # Eligibility: ≥5 user punya ≥2 interaksi
+            counts = df_sorted.groupby('user_id').size()
+            eval_user_ids = counts[counts >= 2].index.tolist()
+            if len(eval_user_ids) < 5 or len(train_df) < 5: return empty
+            
+            # --- Latih ulang model offline pada train_df ---
+            pivot_train = train_df.pivot_table(index="user_id", columns="product_id", values="rating")
+            pivot_train = pivot_train.fillna(0)
+            
+            user_mean = pivot_train.replace(0, np.nan).mean(axis=1).fillna(0)
+            pivot_centered = pivot_train.sub(user_mean, axis=0)
+            
+            binary = (pivot_train > 0).astype(int)
+            co = np.dot(binary.T, binary)
+            
+            sim_items = cosine_similarity(pivot_centered.T)
+            sim_items = np.nan_to_num(sim_items, nan=0.0) * (co / (co + self.cache.get("shrinkage_lambda", 3)))
+            
+            knn_u = NearestNeighbors(n_neighbors=min(16, max(len(pivot_train) - 1, 1)), metric='cosine', algorithm='brute')
+            knn_u.fit(csr_matrix(pivot_centered.values))
+            
+            test_map = {r['user_id']: r['product_id'] for _, r in test_rows.iterrows()}
+            hint = self.cache.get("scale_hint") or {}
+            alpha = 0.6 if len(pivot_train) >= 10 else 0.5
+            k_neigh_item = max(min(16, int(hint.get("n_items", 16)) - 1), 1)
+            
+            pids_all = list(pivot_train.columns)
+            pid_pos = {p: i for i, p in enumerate(pids_all)}
+            users_list = list(pivot_train.index)
+            u_pos = {u: i for i, u in enumerate(users_list)}
+            
+            precisions, recalls, ndcgs = [], [], []
+            for uid in eval_user_ids:
+                true_pid = test_map.get(uid)
+                if uid not in u_pos or true_pid not in pid_pos: continue
+                
+                ui = u_pos[uid]
+                
+                # Skor User-CF (deviasi terboboti, dinormalisasi denominasi)
+                dists, nbr_idx = knn_u.kneighbors(pivot_centered.values[[ui]])
+                sims = 1 - dists[0]
+                num = {}; den = {}
+                for j, nidx in enumerate(nbr_idx[0]):
+                    s = float(sims[j])
+                    if s <= 0.05 or users_list[nidx] == uid: continue
+                    row = pivot_train.iloc[nidx]
+                    for p, r_v in row.items():
+                        if r_v > 0 and pivot_train.iloc[ui][p] == 0:
+                            dev = r_v - float(user_mean.iloc[nidx])
+                            num[p] = num.get(p, 0.0) + s * dev
+                            den[p] = den.get(p, 0.0) + abs(s)
+                mu_u = float(user_mean.iloc[ui])
+                u_scores = {p: (mu_u + (num[p] / den[p]) - 3.0) / 2.0 for p in num if den[p] > 1e-9}
+                
+                # Skor Item-CF (weighted average + denominator)
+                urow = pivot_train.iloc[ui]
+                interacted = [p for p in pids_all if urow[p] > 0]
+                inum = {}; iden = {}
+                for p in interacted:
+                    pi = pid_pos[p]
+                    order = np.argsort(sim_items[:, pi])[::-1]
+                    taken = 0
+                    for qi in order:
+                        qp = pids_all[qi]
+                        if qp == p or taken >= k_neigh_item: break
+                        s = float(sim_items[qi, pi])
+                        if s <= 0 or urow[qp] > 0: continue
+                        inum[qp] = inum.get(qp, 0.0) + s * float(urow[p])
+                        iden[qp] = iden.get(qp, 0.0) + abs(s)
+                        taken += 1
+                i_scores = {p: ((inum[p] / iden[p]) - 3.0) / 2.0 for p in inum if iden[p] > 1e-9}
+                
+                # Blend alpha (normalisasi min-max per model, sama seperti runtime)
+                def mm(d):
+                    if not d: return {}
+                    vs = list(d.values()); mn, mx = min(vs), max(vs)
+                    return {kk: 0.5 for kk in d} if mx == mn else {kk: (vv - mn) / (mx - mn) for kk, vv in d.items()}
+                un, inn = mm(u_scores), mm(i_scores)
+                hybrid = {}
+                for p in set(un) | set(inn):
+                    hybrid[p] = alpha * un.get(p, 0.0) + (1 - alpha) * inn.get(p, 0.0)
+                
+                top_k = sorted(hybrid.items(), key=lambda x: x[1], reverse=True)[:k]
+                ranked = [p for p, _ in top_k]
+                
+                hits = 1 if true_pid in ranked else 0
+                precisions.append(hits / k)
+                recalls.append(hits)  # 1 relevan item → recall = hit-rate
+                if hits:
+                    rank_pos = ranked.index(true_pid) + 1
+                    ndcgs.append(1.0 / np.log2(rank_pos + 1))
+                else:
+                    ndcgs.append(0.0)
+            
+            n = len(precisions)
+            if n == 0: return empty
+            return {
+                "precision_at_k": round(float(np.mean(precisions)), 4),
+                "recall_at_k": round(float(np.mean(recalls)), 4),
+                "ndcg_at_k": round(float(np.mean(ndcgs)), 4),
+                "k": k,
+                "eval_users": n,
+                "eligible": True
+            }
+        except Exception as e:
+            logger.error(f"Error in evaluate_ranking: {e}")
+            return empty
 
     # ==========================================================
     # THESIS EXPERIMENTS — K-Optimization & Cross-Validation
@@ -1345,15 +1548,18 @@ class RecommendationEngine:
         else:
             confidence = (0.3 * density_score) + (0.5 * sim_score) + (0.2 * coverage_score)
         
-        # --- NEW: Evaluation Metrics (MAE & RMSE) ---
+        # --- Evaluation Metrics (v5.5) ---
+        # Ranking (P@K/R@K/NDCG@K) = metrik utama utk top-N implisit;
+        # MAE/RMSE hanya dilaporkan bila sampel uji layak (≥10).
+        ranking_metrics = self.evaluate_ranking(k=5)
         eval_metrics = self.evaluate_model()
         mae = eval_metrics.get("mae", 0)
         rmse = eval_metrics.get("rmse", 0)
         
         # Adjust confidence based on error (Penalti jika RMSE tinggi)
         # RMSE ideal adalah < 1.0 pada skala 1-5
-        if rmse > 1.2: confidence *= 0.9
-        if rmse > 1.5: confidence *= 0.8
+        if eval_metrics.get("eligible") and rmse > 1.2: confidence *= 0.9
+        if eval_metrics.get("eligible") and rmse > 1.5: confidence *= 0.8
         
         # Top Similarity Pairs (Item-Item)
         top_pairs = []
@@ -1394,14 +1600,15 @@ class RecommendationEngine:
                         
                         # Ambil co-occurrence count dari matrix
                         co_count = int(co_matrix_df.loc[pid1, pid2]) if co_matrix_df is not None else 0
-                        penalty = round(min(co_count / 3.0, 1.0), 2)
+                        lam = self.cache.get("shrinkage_lambda", 3)
+                        shrink_factor = round(co_count / (co_count + lam), 2)
                         
                         top_pairs.append({
                             "p1": p_names.get(pid1, f"ID {pid1}"),
                             "p2": p_names.get(pid2, f"ID {pid2}"),
                             "score": round(float(score), 4),
                             "co_occurrence": co_count,
-                            "penalty": penalty
+                            "shrink": shrink_factor
                         })
         
         top_pairs.sort(key=lambda x: x['score'], reverse=True)
@@ -1415,8 +1622,10 @@ class RecommendationEngine:
             "total_signals": len(df),
             "source_distribution": source_dist,
             "top_similarity_pairs": top_pairs,
-            "mae": mae,
-            "rmse": rmse,
+            "ranking_metrics": ranking_metrics,
+            "mae": mae if eval_metrics.get("eligible") else None,
+            "rmse": rmse if eval_metrics.get("eligible") else None,
             "eval_samples": eval_metrics.get("samples", 0),
+            "eval_eligible": bool(eval_metrics.get("eligible")),
             "final_confidence": round(min(confidence, 99.9), 1)
         }

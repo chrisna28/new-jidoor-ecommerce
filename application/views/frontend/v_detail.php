@@ -73,6 +73,14 @@
                             <div class="d-flex flex-wrap gap-2" id="sizeGroup"></div>
                         </div>
 
+                        <?php if (!empty($rec_variant)): ?>
+                        <div class="ai-var-hint mb-3" id="aiVariantHint">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Saran untukmu: <strong><?= htmlspecialchars(trim(($rec_variant['color'] ?? '') . ' · ' . ($rec_variant['size'] ?? ''), ' ·')) ?></strong> — cocok dengan aktivitas belanjamu</span>
+                            <button type="button" class="ai-var-apply" id="aiApplyBtn">Pakai saran</button>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="small mb-4" id="variantSummary" style="display:none; color:var(--muted);"></div>
                         <?php endif; ?>
 
@@ -332,6 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const basePrice   = <?= (float)$product->price ?>;
     const productStock = <?= (int)$product->stock ?>;
+    const recVariant  = <?= json_encode(isset($rec_variant) && !empty($rec_variant) ? ['color' => $rec_variant['color'] ?? null, 'size' => $rec_variant['size'] ?? null] : NULL) ?>;
     const hasVariants = variants.length > 1 || (variants.length === 1 && (variants[0].color !== 'Standar' || variants[0].size !== 'Standar'));
     if (!hasVariants) return;
 
@@ -373,7 +382,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'variant-btn' + (totalStock === 0 ? ' disabled-opt' : '');
-            btn.textContent = color;
+            btn.innerHTML = color;
+            if (recVariant && recVariant.color && color === recVariant.color && totalStock > 0) {
+                btn.classList.add('ai-suggest');
+                btn.innerHTML = color + '<i class="fa-solid fa-wand-magic-sparkles ai-mark" title="Cocok dengan aktivitasmu"></i>';
+            }
             btn.dataset.value = color;
             if (totalStock === 0) btn.disabled = true;
             btn.addEventListener('click', () => selectColor(color));
@@ -387,7 +400,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'variant-btn text-center';
-            btn.innerHTML = v.size + '<span class="vstock">' + (v.stock > 0 ? v.stock + ' stok' : 'habis') + '</span>';
+            let inner = v.size + '<span class="vstock">' + (v.stock > 0 ? v.stock + ' stok' : 'habis') + '</span>';
+            if (recVariant && recVariant.size && v.size === recVariant.size && v.stock > 0) {
+                btn.classList.add('ai-suggest');
+                inner += '<i class="fa-solid fa-wand-magic-sparkles ai-mark" title="Cocok dengan aktivitasmu"></i>';
+            }
+            btn.innerHTML = inner;
             if (v.stock === 0) {
                 btn.classList.add('disabled-opt');
                 btn.disabled = true;
@@ -478,6 +496,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (onlyBtn) onlyBtn.click();
             }
         }
+    }
+
+    // Tombol "Pakai saran" — terapkan varian rekomendasi AI
+    const aiApplyBtn = document.getElementById('aiApplyBtn');
+    if (aiApplyBtn && recVariant && recVariant.color) {
+        aiApplyBtn.addEventListener('click', () => {
+            const target = [...colorGroup.children].find(b => b.dataset.value === recVariant.color && !b.disabled);
+            if (!target) { aiApplyBtn.closest('.ai-var-hint').style.display = 'none'; return; }
+            target.click();
+            if (hasTier2 && recVariant.size) {
+                const sizeBtn = [...sizeGroup.children].find(b => !b.disabled && b.textContent.includes(recVariant.size));
+                if (sizeBtn) sizeBtn.click();
+            }
+            aiApplyBtn.textContent = 'Saran diterapkan';
+            aiApplyBtn.disabled = true;
+        });
     }
 });
 </script>

@@ -693,6 +693,18 @@ a:focus-visible {
 }
 .shop-filter-link { text-decoration: none; }
 
+/* Pemisah tanggal pada chat (frontend) */
+.chat-date-divider {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: rgba(26, 21, 17, 0.06);
+    color: #a89f8f;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
 /* Panel promosi bergambar */
 .panel2 {
     position: relative;
@@ -911,6 +923,38 @@ a:focus-visible {
     margin-top: 2px;
 }
 .variant-btn.active .vstock { color: rgba(246,242,234,.7); }
+
+/* Saran varian dari mesin rekomendasi */
+.variant-btn.ai-suggest { border-style: dashed; border-color: var(--accent); }
+.variant-btn.ai-suggest.active { border-style: solid; }
+.variant-btn .ai-mark {
+    font-size: .7rem;
+    color: var(--accent);
+    margin-left: 6px;
+}
+.variant-btn.active .ai-mark { color: rgba(246,242,234,.85); }
+.ai-var-hint {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+    font-size: .78rem; color: var(--ink-soft);
+    background: rgba(164, 78, 30, .06);
+    border: 1px dashed rgba(164, 78, 30, .3);
+    border-radius: 12px;
+    padding: 10px 14px;
+}
+.ai-var-hint > i { color: var(--accent); font-size: .82rem; }
+.ai-var-hint strong { color: var(--ink); font-weight: 600; }
+.ai-var-apply {
+    margin-left: auto;
+    background: transparent; border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: inherit; font-size: .72rem; font-weight: 600;
+    letter-spacing: .04em;
+    padding: 5px 14px; border-radius: 999px;
+    cursor: pointer; transition: all .18s ease;
+    white-space: nowrap;
+}
+.ai-var-apply:hover:not(:disabled) { background: var(--accent); color: var(--paper); }
+.ai-var-apply:disabled { opacity: .55; cursor: default; }
 
 /* Ulasan */
 .review-sum {

@@ -122,7 +122,31 @@ if (empty($chat_user_id)) { return; } // tamu tidak melihat widget
                '</span></a>';
     }
 
-    function bubble(role, text, time, product) {
+    // ===== Pemisah tanggal (bubble per hari) =====
+    let lastDate = null;
+    const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    function todayKey() {
+        const n = new Date();
+        return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+    }
+    function dateLabel(d) {
+        const today = todayKey();
+        const y = new Date(); y.setDate(y.getDate() - 1);
+        const yesterday = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+        if (d === today) return 'Hari Ini';
+        if (d === yesterday) return 'Kemarin';
+        const p = String(d).split('-');
+        return parseInt(p[2], 10) + ' ' + MONTHS[parseInt(p[1], 10) - 1] + ' ' + p[0];
+    }
+    function divider(label) {
+        const el = document.createElement('div');
+        el.className = 'd-flex justify-content-center my-2';
+        el.innerHTML = '<span class="chat-date-divider">' + label + '</span>';
+        msgBox.appendChild(el);
+    }
+
+    function bubble(role, text, time, product, date) {
+        if (date && date !== lastDate) { divider(dateLabel(date)); lastDate = date; }
         const wrap = document.createElement('div');
         const mine = role === 'user';
         wrap.className = 'd-flex mb-2 ' + (mine ? 'justify-content-end' : 'justify-content-start');
@@ -141,7 +165,7 @@ if (empty($chat_user_id)) { return; } // tamu tidak melihat widget
             .then(r => r.json())
             .then(res => {
                 msgBox.innerHTML = '';
-                (res.messages || []).forEach(m => bubble(m.role, m.text, m.sent_at, m.product));
+                (res.messages || []).forEach(m => bubble(m.role, m.text, m.sent_at, m.product, m.date));
                 if (!(res.messages || []).length) {
                     msgBox.innerHTML = '<div class="text-center text-muted small py-5">Belum ada pesan.<br>Sapa admin kami!</div>';
                 }
@@ -160,7 +184,7 @@ if (empty($chat_user_id)) { return; } // tamu tidak melihat widget
 
         ws.onmessage = (e) => {
             const d = JSON.parse(e.data);
-            if (d.type === 'message') { bubble(d.role, d.text, d.sent_at, d.product); }
+            if (d.type === 'message') { bubble(d.role, d.text, d.sent_at, d.product, d.date); }
         };
 
         ws.onclose = () => { wsOnline = false; onOffline(); setTimeout(connect, 3000); };
@@ -179,7 +203,7 @@ if (empty($chat_user_id)) { return; } // tamu tidak melihat widget
 
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(payload));
-            bubble('user', text, now, chatProduct);
+            bubble('user', text, now, chatProduct, todayKey());
         } else {
             // Fallback HTTP saat daemon mati
             const fd = new FormData();
@@ -187,7 +211,7 @@ if (empty($chat_user_id)) { return; } // tamu tidak melihat widget
             if (chatProduct) { fd.append('product_id', chatProduct.id); }
             fetch('<?= site_url("chat/offline_message") ?>', { method: 'POST', body: fd })
                 .then(r => r.json())
-                .then(() => bubble('user', text, now, chatProduct));
+                .then(() => bubble('user', text, now, chatProduct, todayKey()));
         }
     }
 

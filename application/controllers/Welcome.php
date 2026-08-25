@@ -78,8 +78,23 @@ class Welcome extends CI_Controller {
         return isset($result['recommended_product_ids']) ? $result['recommended_product_ids'] : [];
     }
 
-    private function _get_sectioned_recommendations($user_id, $limit_per_section = 8) {
-        $api_url = 'http://127.0.0.1:8000/recommend/sections/' . (int)$user_id . '?limit_per_section=' . (int)$limit_per_section . '&with_variants=true';
+    // Varian (warna + ukuran) terbaik untuk satu produk — halaman detail
+    private function _get_variant_rec($user_id, $product_id) {
+        if (!$user_id) return NULL;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'http://127.0.0.1:8000/recommend/variant/' . (int)$user_id . '/' . (int)$product_id);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        if (!$response) return NULL;
+        $result = json_decode($response, TRUE);
+        return isset($result['variant']) && !empty($result['variant']) ? $result['variant'] : NULL;
+    }
+
+    private function _get_sectioned_recommendations($user_id, $limit_per_section = 8) {        $api_url = 'http://127.0.0.1:8000/recommend/sections/' . (int)$user_id . '?limit_per_section=' . (int)$limit_per_section . '&with_variants=true';
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -366,6 +381,7 @@ class Welcome extends CI_Controller {
             'title'       => $product->name . ' — JiDoor Store',
             'product'     => $product,
             'variants'    => $this->M_product->get_variants($product->id),
+            'rec_variant' => $this->_get_variant_rec($user_id, $product->id),
             'avg_rating'  => $avg_rating,
             'user_rating' => $user_rating,
             'like_count'    => $this->M_product->count_likes($product->id),

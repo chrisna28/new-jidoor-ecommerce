@@ -35,6 +35,7 @@ new-jidoor-ecommerce/
 ├── assets/css/style.css   ← Design system "Editorial Luxe" (cache-bust versi ?v=3.1)
 ├── uploads/               ← products/, payments/, custom/
 ├── python_api/            ← recommendation_engine.py, main.py (FastAPI), search_integration.py
+├── sql/load_dummy.py      ← Loader data dummy idempotent (15 user, 3 klaster preferensi)
 ├── chat-server.php        ← Daemon WebSocket Ratchet (ws://localhost:8080/chat)
 ├── ecommerce_db.sql       ← Skema + seed database
 ├── db_migration_revisi.sql← Migrasi tambahan (varian, tracking, snap token, chat, dll.)
@@ -115,6 +116,14 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```bash
 php chat-server.php     # listen ws://localhost:8080/chat
 ```
+
+### 7. Muat Data Dummy (opsional — untuk evaluasi CF)
+
+```bash
+cd python_api && ./venv/bin/python ../sql/load_dummy.py
+```
+
+Loader **idempotent** (hapus lalu isi ulang): 10 user dummy (id 200–209) dengan 3 klaster preferensi (kasual, formal, campuran), 35 rating, 18 pesanan, 20 like, 20 keranjang, 62 view — cukup untuk mengaktifkan evaluasi ranking (P@K/R@K/NDCG@K) dan personalisasi User-KNN. Tanggal interaksi dihasilkan **recent** (≤ 30 hari) agar time-decay tidak menghancurkan sinyal. Semua akun dummy memakai password `admin123`.
 
 ---
 
@@ -212,9 +221,11 @@ Seluruh storefront memakai satu file `assets/css/style.css` (versi cache-bust di
 
 ## 🤖 AI Recommendation Engine (Ringkasan)
 
-Mesin CF murni (tanpa content-based): skor akhir gabungan User-Based + Item-Based (alpha adaptif skala data) dengan normalisasi global, cosine similarity atas pivot rating multi-sinyal, mean-centering kondisional (sparsity < 85%), co-occurrence penalty, time-decay, dan strategi cold start. Hyperparameter menyesuaikan ukuran data otomatis (`scale_hint`): threshold & alpha berbeda untuk katalog kecil (< 15 user) vs besar (> 100 user).
+Mesin CF murni (tanpa content-based) mengikuti formula kanonik literatur (v5.5): **User-CF** prediksi mean-centered weighted average `pred = μᵤ + Σ s·(r−μᵥ)/Σ|s|`, **Item-CF** weighted average `score = Σ sim·r/Σ sim` dengan top-K tetangga, cosine similarity atas pivot multi-sinyal + conditional mean-centering (sparsity < 85%), **significance shrinkage** `sim·n/(n+λ)` (λ=3), normalisasi per-model terpisah sebelum blend alpha adaptif, time-decay, cap view 3× per user×item, dan strategi cold start. Hyperparameter menyesuaikan ukuran data otomatis (`scale_hint`): threshold & alpha berbeda untuk katalog kecil (< 15 user) vs besar (> 100 user).
 
-**Sinyal interaksi:** purchase 5.0 · explicit rating 1–5 · wishlist 2.5 · cart 2.0 · view 1.5 (× faktor decay waktu). Pembelian dihitung dari pesanan berstatus `paid`/`shipped`/`delivered`.
+**Evaluasi model:** ranking metrics standar top-N implisit — **Precision@K, Recall@K, NDCG@K** (leave-last-out per user, remove seen, K=5); MAE/RMSE hanya dihitung bila sampel uji ≥ 10. Metrik tampil di dashboard admin (kartu "Kualitas Model").
+
+**Sinyal interaksi:** purchase 5.0 · explicit rating 1–5 · wishlist 2.5 · cart 2.0 · view 1.5 maks 3× per user×item (× faktor decay waktu). Pembelian dihitung dari pesanan berstatus `paid`/`shipped`/`delivered`.
 
 **Lapisan varian (`variant_recommender.py`):** setiap rekomendasi produk dilengkapi saran varian terbaik — warna + ukuran — dipilih dari profil preferensi personal (riwayat pembelian bobot 3, keranjang bobot 2), popularitas global varian, dan ketersediaan stok; fallback ke varian populer untuk user baru. Chip varian tampil pada kartu produk (beranda, katalog, detail).
 
@@ -223,11 +234,17 @@ Mesin CF murni (tanpa content-based): skor akhir gabungan User-Based + Item-Base
 | Endpoint | Method | Fungsi |
 | --- | --- | --- |
 | `/recommend/{user_id}?top_n=8&metadata=true&with_variants=true` | GET | Rekomendasi utama (+ varian bila diminta) |
-| `/recommend/sections/{user_id}?with_variants=true` | GET | Rekomendasi per-seksi (beranda) |
+| `/recommend/sections/{user_id}?with_variants=true` | GET | Rekomendasi per-seksi (beranda), terurut: Hybrid → Item → User → Trending → New |
 | `/recommend/item/{product_id}?top_n=4` | GET | Produk serupa (halaman detail) |
+| `/recommend/variant/{user_id}/{product_id}` | GET | Saran varian (warna + ukuran) personal untuk satu produk |
 | `/track/view` | POST | Catat view `{user_id, product_id, session_id}` |
-| `/admin/stats` | GET | Statistik model (density, coverage, confidence) |
+| `/admin/stats` | GET | Statistik model (density, coverage, confidence, ranking metrics, active params) |
+| `/admin/rec-preview/{user_id}` | GET | Preview rekomendasi personal (barang + varian) untuk dashboard |
+| `/admin/cf-detail/{user_id}` | GET | Detail langkah CF (similarity, agregasi alpha, varian) |
 | `/cache/refresh` | POST | Paksa hitung ulang similarity + bersihkan cache varian |
+
+**Urutan section rekomendasi** deterministik & diurutkan relevansi (item terbaik selalu teratas, tanpa shuffle):
+`Rekomendasi untuk Anda` (Hybrid) → `Karena Anda menyukai X` (Item-Based) → `Pengguna lain juga menyukai ini` (User-Based) → `Sedang tren` (Trending) → `Baru tiba untukmu` (New Arrivals).
 
 Model CF memantau signature tabel (`ratings`, `orders`, `order_items`, `order_tracking`, `cart`, `likes`, `product_views`) — perubahan status pesanan atau item otomatis memicu hitung ulang tanpa restart. Integrasi PHP memakai `PY_API_BASE_URL` dari `.env`; jika API mati, halaman tetap tampil tanpa seksi rekomendasi. Detail algoritma lengkap tersedia dalam kode `python_api/recommendation_engine.py`.
 
@@ -251,7 +268,7 @@ Model CF memantau signature tabel (`ratings`, `orders`, `order_items`, `order_tr
 - **Storefront redesign "Editorial Luxe" v3.1** — seluruh halaman frontend & auth ditata ulang; semua kontrak data/JS dipertahankan.
 - **Lupa password disederhanakan** — reset langsung via email terdaftar (kode token/email SMTP & `M_password_reset` dihapus).
 - **Verifikasi pembayaran dua jalur** — finish-redirect (lokal) + webhook (produksi), keduanya idempotent.
-- **Engine CF v5.4** — fix status pembelian (`delivered`), signature cache memantau `order_items`/`order_tracking` (recompute otomatis), filter view guest, auto-tuning skala data; lapisan varian baru: rekomendasi warna + ukuran personal per kartu produk.
+- **Engine CF v5.5** — formula KNN-CF kanonik (mean-centered weighted average + denominasi), significance shrinkage `n/(n+λ)` menggantikan co-occurrence penalty, normalisasi per-model terpisah, cap view 3×/user×item, buang sinyal guest `user_id=0`, evaluasi ranking P@K/R@K/NDCG@K di dashboard; section rekomendasi deterministik & terurut relevansi (tanpa shuffle); v5.4: fix status pembelian (`delivered`), signature cache memantau `order_items`/`order_tracking` (recompute otomatis), auto-tuning skala data; lapisan varian: rekomendasi warna + ukuran personal per kartu produk.
 
 ---
 
