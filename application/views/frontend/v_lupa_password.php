@@ -26,21 +26,41 @@
             </div>
 
             <header class="a2-head a2-rise">
-                <h1>Atur ulang <em>kata sandi</em> Anda.</h1>
-                <p>Masukkan email akun Anda dan kami akan mengirimkan tautan reset.</p>
+                <h1>Atur <em>password baru</em> Anda.</h1>
+                <p>Masukkan email terdaftar beserta password baru — langsung tersimpan tanpa verifikasi email.</p>
             </header>
 
             <form action="<?= base_url('lupa-password') ?>" method="post" class="a2-form" data-auth-form>
                 <?= csrf_field() ?>
                 <div class="a2-field a2-rise">
-                    <label for="email">Email</label>
+                    <label for="email">Email Terdaftar</label>
                     <div class="a2-control">
                         <input type="email" id="email" name="email" class="a2-input" placeholder="anda@contoh.com" autocomplete="email" required autofocus>
                     </div>
                 </div>
 
+                <div class="a2-field a2-rise">
+                    <label for="password">Password Baru</label>
+                    <div class="a2-control">
+                        <input type="password" id="password" name="password" class="a2-input" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
+                        <button type="button" class="a2-eye" data-toggle-pass="#password" aria-label="Tampilkan kata sandi">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="a2-field a2-rise">
+                    <label for="confirm_password">Konfirmasi Password</label>
+                    <div class="a2-control">
+                        <input type="password" id="confirm_password" name="confirm_password" class="a2-input" placeholder="Ulangi password baru" autocomplete="new-password" minlength="6" required>
+                        <button type="button" class="a2-eye" data-toggle-pass="#confirm_password" aria-label="Tampilkan kata sandi">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <button type="submit" class="a2-btn a2-rise" data-auth-btn>
-                    <span>Kirim Tautan Reset</span><i class="fa-solid fa-arrow-right"></i>
+                    <span>Simpan Password Baru</span><i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
 
@@ -58,6 +78,16 @@ document.querySelectorAll('[data-auth-form]').forEach(function (form) {
         btn.disabled = true;
         var label = btn.querySelector('span');
         if (label) { label.textContent = 'Mohon tunggu'; }
+    });
+});
+
+document.querySelectorAll('[data-toggle-pass]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var input = document.querySelector(btn.getAttribute('data-toggle-pass'));
+        if (!input) { return; }
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.innerHTML = '<i class="fa-' + (show ? 'solid' : 'regular') + ' fa-eye' + (show ? '-slash' : '') + '"></i>';
     });
 });
 </script>

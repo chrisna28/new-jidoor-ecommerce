@@ -17,7 +17,6 @@ $route['register']         = 'auth/register';
 $route['register/aksi']    = 'auth/register_aksi';
 $route['logout']           = 'auth/logout';
 $route['lupa-password']    = 'auth/lupa_password';
-$route['reset-password/(:any)'] = 'auth/reset_password/$1';
 
 // -------------------------------------------------------
 // FRONTEND ROUTES

@@ -12,21 +12,24 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/images/favicon.svg') ?>">
+    <script>document.documentElement.classList.add('js');</script>
 
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <!-- Custom Style -->
-    <link rel="stylesheet" href="<?= base_url('assets/css/style.css?v=2.3') ?>">
+    <!-- Custom Style — Editorial Luxe -->
+    <link rel="stylesheet" href="<?= base_url('assets/css/style.css?v=3.1') ?>">
 </head>
 <?php
 $uri      = uri_string();
-$is_auth  = in_array($uri, ['login', 'register', 'lupa-password', 'auth/login', 'auth/register'])
-          || strpos($uri, 'reset-password/') === 0;
+$is_auth  = in_array($uri, ['login', 'register', 'lupa-password', 'auth/login', 'auth/register']);
 $user_id = $this->session->userdata('user_id');
 ?>
 <body class="<?= $is_auth ? 'a2-page' : 'store-front' ?>">
+
+<!-- Grain film global -->
+<div class="grain" aria-hidden="true"></div>
 
 <?php
 // Widget chat (Revisi #7) — hanya untuk customer yang login
@@ -55,6 +58,17 @@ if ($user_id && $this->session->userdata('role') !== 'admin') {
                         ->where_in('status', ['paid', 'shipped'])->count_all_results();
 }
 ?>
+<!-- Strip pengumuman -->
+<div class="announce-bar">
+    <div class="container">
+        <div class="announce-inner">
+            <span><i class="fas fa-truck-fast"></i>Gratis ongkir se-Indonesia, setiap hari</span>
+            <span class="announce-extra"><i class="fas fa-scissors"></i>Produksi kustom &amp; massal — konsultasi gratis</span>
+            <span class="announce-extra"><i class="fas fa-shield-halved"></i>Garansi jahitan 3 tahun</span>
+        </div>
+    </div>
+</div>
+
 <nav id="mainNavbar" class="navbar navbar-expand-lg navbar-v2 sticky-top">
     <div class="container">
         <!-- Kiri: Logo -->
@@ -98,13 +112,13 @@ if ($user_id && $this->session->userdata('role') !== 'admin') {
                     <a href="#" class="nav-icon dropdown-toggle-no position-relative" data-bs-toggle="dropdown" aria-label="Akun">
                         <i class="far fa-user"></i>
                         <?php if ($notif_count > 0): ?>
-                            <span class="position-absolute translate-middle p-1 rounded-circle mt-1" style="background:var(--accent-warm); left:100%; top:0;">
+                            <span class="position-absolute translate-middle p-1 rounded-circle mt-1" style="background:var(--accent); left:100%; top:0;">
                                 <span class="visually-hidden">Notifikasi baru</span>
                             </span>
                         <?php endif; ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><h6 class="dropdown-header">AKUN</h6></li>
+                        <li><h6 class="dropdown-header">Akun</h6></li>
                         <li><a class="dropdown-item" href="<?= base_url('pesanan') ?>"><i class="far fa-list-alt me-2"></i>Pesanan Saya</a></li>
                         <li><a class="dropdown-item" href="<?= base_url('riwayat-rating') ?>"><i class="far fa-star me-2"></i>Rating Saya</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -125,7 +139,7 @@ if ($user_id && $this->session->userdata('role') !== 'admin') {
 <!-- Drawer mobile -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileNav" style="max-width:340px;">
     <div class="offcanvas-header px-4 pt-4">
-        <span class="fw-bold fs-5" style="letter-spacing:-.02em;">JiDoor</span>
+        <span class="fw-bold fs-5" style="font-family:'Playfair Display',Georgia,serif; letter-spacing:-.02em;">JiDoor</span>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Tutup"></button>
     </div>
     <div class="offcanvas-body px-4 d-flex flex-column">

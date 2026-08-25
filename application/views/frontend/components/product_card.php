@@ -7,7 +7,7 @@ $is_liked_card = !empty($p->is_liked)
     || (isset($user_like_ids) && in_array($p->id, $user_like_ids));
 $img = $p->image && $p->image !== 'default.jpg'
     ? base_url('uploads/products/' . $p->image)
-    : 'https://placehold.co/600x800/f5f5f5/000000?text=' . urlencode($p->name);
+    : 'https://placehold.co/600x800/f6f2ea/1a1511?text=' . urlencode($p->name);
 ?>
 <div class="pcard" data-product-id="<?= $p->id ?>" <?= isset($badge_text) ? 'data-is-recommended="true"' : '' ?>>
     <a href="<?= base_url('produk/' . $p->slug) ?>" class="pcard-img" aria-label="<?= htmlspecialchars($p->name) ?>">

@@ -1,19 +1,21 @@
 <div class="container">
-    <div class="page-head text-center">
-        <span class="eyebrow">Keranjang belanja</span>
-        <h1 class="page-title mt-2">Tas Anda</h1>
-        <p style="color:var(--muted); font-size:.9rem;" class="mb-0">Periksa pesanan Anda sebelum melanjutkan ke pembayaran.</p>
+    <div class="page-head text-center" data-reveal>
+        <span class="eyebrow eyebrow-plain">Keranjang belanja</span>
+        <h1 class="page-title mt-3">Tas Anda</h1>
+        <p style="color:var(--muted); font-size:.92rem;" class="mb-0">Periksa pesanan Anda sebelum melanjutkan ke pembayaran.</p>
     </div>
 
     <?php if (!empty($cart_items)): ?>
-        <div class="row g-5 pb-5">
+        <div class="row g-5 pb-sect">
             <!-- Daftar Item -->
-            <div class="col-lg-8">
+            <div class="col-lg-8" data-reveal>
                 <?php foreach ($cart_items as $item): ?>
                     <div class="cart-row flex-column flex-sm-row align-items-sm-center">
-                        <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/100x120/f5f5f5/000000?text=P' ?>" class="cart-thumb" alt="<?= htmlspecialchars($item->name) ?>">
+                        <a href="<?= base_url('produk/' . ($item->slug ?? '')) ?>">
+                            <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/100x120/f6f2ea/1a1511?text=P' ?>" class="cart-thumb" alt="<?= htmlspecialchars($item->name) ?>">
+                        </a>
                         <div class="flex-grow-1 mt-3 mt-sm-0">
-                            <a href="#" class="cart-name"><?= htmlspecialchars($item->name) ?></a>
+                            <a href="<?= base_url('produk/' . ($item->slug ?? '')) ?>" class="cart-name"><?= htmlspecialchars($item->name) ?></a>
                             <?php if ((!empty($item->color) && $item->color !== 'Standar') || (!empty($item->size) && $item->size !== 'Standar')): ?>
                                 <div class="cart-var">
                                     <?= trim((!empty($item->color) && $item->color !== 'Standar' ? ($item->variant_name1 ?: 'Variasi') . ': ' . htmlspecialchars($item->color) . ' · ' : '') . (!empty($item->size) && $item->size !== 'Standar' ? ($item->variant_name2 ?: 'Variasi') . ': ' . htmlspecialchars($item->size) : ''), ' ·') ?>
@@ -48,9 +50,9 @@
             </div>
 
             <!-- Ringkasan -->
-            <div class="col-lg-4">
+            <div class="col-lg-4" data-reveal style="--rd:.12s;">
                 <div class="summary-card card-soft">
-                    <h5 class="fw-semibold mb-4">Ringkasan</h5>
+                    <h5 class="mb-4" style="font-family:'Playfair Display',Georgia,serif; font-weight:500; font-size:1.35rem;">Ringkasan</h5>
 
                     <div class="sum-row">
                         <span class="lbl">Subtotal</span>
@@ -71,7 +73,7 @@
                         </div>
                     </div>
 
-                    <div class="sum-row sum-total">
+                    <div class="sum-row sum-total pt-2">
                         <span>Total pesanan</span>
                         <span class="tnum">Rp <?= number_format($total_price, 0, ',', '.') ?></span>
                     </div>
@@ -87,7 +89,7 @@
             </div>
         </div>
     <?php else: ?>
-        <div class="empty2 card-soft mb-5">
+        <div class="empty2 card-soft mb-sect" data-reveal>
             <div class="ico"><i class="fas fa-bag-shopping"></i></div>
             <h3>Tas Anda masih kosong</h3>
             <p>Sepertinya Anda belum menambahkan produk apa pun ke tas.</p>

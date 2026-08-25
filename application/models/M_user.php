@@ -86,12 +86,4 @@ class M_user extends CI_Model {
         $this->db->where('id', $user_id);
         return $this->db->update('users', ['password' => $hash]);
     }
-
-    /**
-     * Update password user berdasarkan email (sudah ter-hash)
-     */
-    public function update_password_by_email($email, $hash) {
-        $this->db->where('email', $email);
-        return $this->db->update('users', ['password' => $hash]);
-    }
 }

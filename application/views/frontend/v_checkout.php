@@ -1,10 +1,10 @@
 <div class="container">
-    <div class="page-head">
+    <div class="page-head" data-reveal>
         <span class="eyebrow">Checkout</span>
-        <h1 class="page-title mt-2">Selesaikan pesanan</h1>
+        <h1 class="page-title mt-3">Selesaikan pesanan</h1>
     </div>
 
-    <div class="steps mb-5">
+    <div class="steps mb-5" data-reveal style="--rd:.08s;">
         <span class="step active"><span class="step-dot">1</span> <span class="step-label">Pengiriman</span></span>
         <span class="step-line"></span>
         <span class="step active"><span class="step-dot">2</span> <span class="step-label">Pembayaran</span></span>
@@ -14,9 +14,9 @@
 
     <form action="<?= base_url('checkout/proses') ?>" method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
-        <div class="row g-5 pb-5">
+        <div class="row g-5 pb-sect">
             <!-- Kolom 1 -->
-            <div class="col-lg-7">
+            <div class="col-lg-7" data-reveal>
                 <section class="mb-5">
                     <span class="eyebrow">Langkah 1 — Informasi pengiriman</span>
                     <div class="card-soft p-4 p-md-5 mt-3">
@@ -62,7 +62,7 @@
                             <div class="d-flex align-items-start gap-3">
                                 <input type="radio" name="payment_method" id="pay_online" value="midtrans" checked style="margin-top:4px;">
                                 <div>
-                                    <div class="pay-title"><i class="fas fa-bolt me-2" style="color:var(--accent-warm);"></i>Bayar online — QRIS / Virtual Account / E-Wallet / Kartu</div>
+                                    <div class="pay-title"><i class="fas fa-bolt me-2" style="color:var(--accent);"></i>Bayar online — QRIS / Virtual Account / E-Wallet / Kartu</div>
                                     <div class="pay-desc">Via Midtrans. Status pesanan diperbarui otomatis setelah pembayaran berhasil.</div>
                                     <div class="d-flex gap-3 mt-3" style="color:var(--muted);">
                                         <i class="fab fa-cc-visa fs-4"></i>
@@ -78,7 +78,7 @@
                             <div class="d-flex align-items-start gap-3">
                                 <input type="radio" name="payment_method" id="bank_transfer" value="bank_transfer" style="margin-top:4px;">
                                 <div>
-                                    <div class="pay-title"><i class="fas fa-building-columns me-2" style="color:var(--accent-warm);"></i>Transfer bank (verifikasi manual)</div>
+                                    <div class="pay-title"><i class="fas fa-building-columns me-2" style="color:var(--accent);"></i>Transfer bank (verifikasi manual)</div>
                                     <div class="pay-desc">Transfer ke rekening Bank Mandiri <strong>123-456-7890 (JiDoor Store)</strong>. Bukti pembayaran diunggah setelah checkout.</div>
                                 </div>
                             </div>
@@ -116,15 +116,15 @@
             </div>
 
             <!-- Kolom 2: Ringkasan -->
-            <div class="col-lg-5">
+            <div class="col-lg-5" data-reveal style="--rd:.12s;">
                 <div class="summary-card card-soft">
-                    <h5 class="fw-semibold mb-4">Pesanan Anda</h5>
+                    <h5 class="mb-4" style="font-family:'Playfair Display',Georgia,serif; font-weight:500; font-size:1.35rem;">Pesanan Anda</h5>
 
                     <div class="mb-4">
                         <?php foreach ($cart_items as $item): ?>
-                            <div class="d-flex justify-content-between align-items-center gap-3 py-2" style="border-bottom:1px dashed var(--line);">
+                            <div class="d-flex justify-content-between align-items-center gap-3 py-3" style="border-bottom:1px solid var(--line);">
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/50x60/f5f5f5/000000?text=P' ?>" alt="" style="width:46px; height:56px; object-fit:cover; border-radius:8px;">
+                                    <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/50x60/f6f2ea/1a1511?text=P' ?>" alt="" style="width:46px; height:56px; object-fit:cover; border-radius:8px;">
                                     <div>
                                         <div class="fw-semibold" style="font-size:.86rem;"><?= htmlspecialchars($item->name) ?></div>
                                         <?php if ((!empty($item->color) && $item->color !== 'Standar') || (!empty($item->size) && $item->size !== 'Standar')): ?>
@@ -149,7 +149,7 @@
 
                     <hr style="border-color:var(--line); opacity:1;">
 
-                    <div class="sum-row sum-total">
+                    <div class="sum-row sum-total pt-2">
                         <span>Total</span>
                         <span class="tnum">Rp <?= number_format($total_price, 0, ',', '.') ?></span>
                     </div>

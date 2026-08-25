@@ -1,12 +1,12 @@
 <div class="container">
-    <div class="page-head text-center">
-        <span class="eyebrow">Riwayat</span>
-        <h1 class="page-title mt-2">Pesanan saya</h1>
-        <p style="color:var(--muted); font-size:.9rem;" class="mb-0">Lacak dan kelola riwayat pesanan Anda.</p>
+    <div class="page-head text-center" data-reveal>
+        <span class="eyebrow eyebrow-plain">Riwayat</span>
+        <h1 class="page-title mt-3">Pesanan saya</h1>
+        <p style="color:var(--muted); font-size:.92rem;" class="mb-0">Lacak dan kelola riwayat pesanan Anda.</p>
     </div>
 
     <?php if (!empty($orders)): ?>
-        <div class="row justify-content-center pb-5">
+        <div class="row justify-content-center pb-sect">
             <div class="col-lg-9">
                 <?php foreach ($orders as $o): ?>
                     <div class="order-card card-soft flex-column flex-sm-row align-items-sm-center">
@@ -28,7 +28,7 @@
                         ?>
                         <span class="st-chip <?= $st_cls ?>"><i class="fas fa-circle" style="font-size:.4rem;"></i> <?= status_label_id($o->status) ?></span>
                         <div class="ms-sm-auto text-sm-end mt-3 mt-sm-0">
-                            <div class="order-total tnum">Rp <?= number_format($o->total_price, 0, ',', '.') ?></div>
+                            <div class="order-total tnum mb-1">Rp <?= number_format($o->total_price, 0, ',', '.') ?></div>
                             <a href="<?= base_url('pesanan/detail/' . $o->id) ?>" class="btn-text2 btn-sm2">Detail <i class="fas fa-arrow-right"></i></a>
                         </div>
                     </div>
@@ -36,7 +36,7 @@
             </div>
         </div>
     <?php else: ?>
-        <div class="empty2 card-soft mb-5">
+        <div class="empty2 card-soft mb-sect">
             <div class="ico"><i class="fas fa-box-open"></i></div>
             <h3>Belum ada pesanan</h3>
             <p>Anda belum memiliki pesanan.</p>

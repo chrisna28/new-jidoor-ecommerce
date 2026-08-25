@@ -1,5 +1,5 @@
-<div class="container pt-4 pb-5">
-    <nav class="crumb2" aria-label="breadcrumb">
+<div class="container pt-4 pb-sect">
+    <nav class="crumb2" aria-label="breadcrumb" data-reveal>
         <a href="<?= base_url() ?>">Beranda</a>
         <span class="sep">/</span>
         <a href="<?= base_url('katalog') ?>">Katalog</a>
@@ -10,13 +10,13 @@
     <div class="row g-5 mt-1">
         <!-- Galeri -->
         <div class="col-lg-7">
-            <div class="gallery-main">
-                <img src="<?= $product->image && $product->image !== 'default.jpg' ? base_url('uploads/products/' . $product->image) : 'https://placehold.co/900x990/f5f5f5/000000?text=' . urlencode($product->name) ?>" alt="<?= htmlspecialchars($product->name) ?>">
+            <div class="gallery-main" data-reveal>
+                <img src="<?= $product->image && $product->image !== 'default.jpg' ? base_url('uploads/products/' . $product->image) : 'https://placehold.co/900x990/f6f2ea/1a1511?text=' . urlencode($product->name) ?>" alt="<?= htmlspecialchars($product->name) ?>">
             </div>
 
-            <div class="mt-5">
+            <div class="mt-5" data-reveal>
                 <span class="eyebrow">Deskripsi</span>
-                <div class="lh-lg mt-3" style="color:var(--ink-soft); font-weight:300;">
+                <div class="lh-lg mt-3" style="color:var(--ink-soft); font-weight:300; font-size:1.02rem;">
                     <?= nl2br(htmlspecialchars($product->description)) ?>
                 </div>
             </div>
@@ -25,8 +25,9 @@
         <!-- Buy Box -->
         <div class="col-lg-5">
             <div class="buybox">
-                <div class="buybox-card card-soft">
-                    <h1 class="buybox-title mb-3"><?= htmlspecialchars($product->name) ?></h1>
+                <div class="buybox-card card-soft" data-reveal style="--rd:.12s;">
+                    <span class="pcard-cat"><?= htmlspecialchars($product->category_name) ?></span>
+                    <h1 class="buybox-title mb-3 mt-1"><?= htmlspecialchars($product->name) ?></h1>
 
                     <div class="d-flex align-items-baseline gap-3 mb-2">
                         <div class="buybox-price tnum" id="priceDisplay">Rp <?= number_format($product->price, 0, ',', '.') ?></div>
@@ -78,7 +79,7 @@
                         <?php if (!empty($product->is_custom)): ?>
                         <!-- Permintaan Custom (Revisi #4) -->
                         <div class="fx-field">
-                            <label><i class="fas fa-wand-magic-sparkles me-1" style="color:var(--accent-warm);"></i> Permintaan custom</label>
+                            <label><i class="fas fa-wand-magic-sparkles me-1" style="color:var(--accent);"></i> Permintaan custom</label>
                             <textarea name="custom_text" class="fx-input" rows="3" maxlength="500" placeholder="Tuliskan desain atau permintaan khusus Anda..."></textarea>
                             <div class="fx-hint"><span id="customCounter">0</span>/500 karakter · Gambar referensi dapat diunggah saat checkout.</div>
                         </div>
@@ -151,9 +152,9 @@
     <!-- Ulasan -->
     <div class="sect">
         <div class="sec-head">
-            <div>
-                <span class="eyebrow">Penilaian pembeli</span>
-                <h2 class="mt-2">Ulasan produk</h2>
+            <div data-reveal>
+                <span class="sec-num">Penilaian pembeli</span>
+                <h2>Ulasan produk</h2>
             </div>
         </div>
 
@@ -173,7 +174,7 @@
             }
         ?>
 
-        <div class="review-sum card-soft mb-4">
+        <div class="review-sum card-soft mb-4" data-reveal>
             <div class="text-center px-md-3">
                 <div class="review-score tnum"><?= $avg_rev ?></div>
                 <div class="stars my-2">
@@ -218,7 +219,7 @@
                                 <?php endfor; ?>
                             </div>
                         </div>
-                        <div class="lh-base" style="font-size:.9rem; color:var(--ink-soft);">
+                        <div class="lh-base" style="font-size:.92rem; color:var(--ink-soft);">
                             <?= nl2br(htmlspecialchars($rev->review)) ?>
                         </div>
                     </div>
@@ -231,9 +232,9 @@
             <?php endif; ?>
 
             <!-- Form Ulasan -->
-            <div class="card-soft p-4 p-md-5 mt-5">
-                <h5 class="fw-semibold mb-4 d-flex align-items-center">
-                    <i class="fa-solid fa-pen-to-square me-3" style="color:var(--accent-warm);"></i> Berikan ulasan Anda
+            <div class="card-soft p-4 p-md-5 mt-5" data-reveal>
+                <h5 class="fw-semibold mb-4 d-flex align-items-center" style="font-family:'Playfair Display',Georgia,serif; font-weight:500 !important; font-size:1.35rem;">
+                    <i class="fa-solid fa-pen-to-square me-3" style="color:var(--accent);"></i> Berikan ulasan Anda
                 </h5>
                 <?php if (!$this->session->userdata('user_id')): ?>
                     <div class="text-center py-3">
@@ -261,7 +262,7 @@
                         </div>
 
                         <button type="submit" class="btn-ink mt-2">
-                            Kirim ulasan <i class="fa-solid fa-paper-plane" style="font-size:.78rem;"></i>
+                            Kirim ulasan <i class="fa-solid fa-paper-plane" style="font-size:.74rem;"></i>
                         </button>
                     </form>
                 <?php endif; ?>
@@ -271,18 +272,18 @@
 </div>
 
 <!-- Produk Terkait -->
-<div class="container sect">
+<div class="container sect pb-sect">
     <div class="sec-head">
-        <div>
-            <span class="eyebrow">Lanjutkan penjelajahan</span>
-            <h2 class="mt-2">Produk terkait</h2>
+        <div data-reveal>
+            <span class="sec-num">Lanjutkan penjelajahan</span>
+            <h2>Produk terkait</h2>
         </div>
-        <a href="<?= base_url('katalog') ?>" class="sec-link d-none d-md-inline-flex">Lihat koleksi <i class="fas fa-arrow-right"></i></a>
+        <a href="<?= base_url('katalog') ?>" class="sec-link d-none d-md-inline-flex" data-reveal style="--rd:.1s;">Lihat koleksi <i class="fas fa-arrow-right"></i></a>
     </div>
 
     <div class="row g-4">
         <?php if (!empty($related)): foreach ($related as $p): ?>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-3" data-reveal>
                 <?php
                     $is_similar = isset($similar_ids) && in_array($p->id, $similar_ids);
                     $this->load->view('frontend/components/product_card', [

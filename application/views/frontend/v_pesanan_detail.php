@@ -1,5 +1,5 @@
 <div class="container">
-    <div class="page-head">
+    <div class="page-head" data-reveal>
         <nav class="crumb2">
             <a href="<?= base_url('pesanan') ?>"><i class="fas fa-arrow-left me-1"></i> Pesanan saya</a>
             <span class="sep">/</span>
@@ -24,16 +24,16 @@
         <p style="color:var(--muted); font-size:.85rem;" class="mb-0 mt-2"><?= tanggal_indo(strtotime($order->created_at)) ?>, <?= date('H:i', strtotime($order->created_at)) ?> WIB</p>
     </div>
 
-    <div class="row g-5 pb-5">
+    <div class="row g-5 pb-sect">
         <!-- Kiri: Item & Detail -->
-        <div class="col-lg-8">
+        <div class="col-lg-8" data-reveal>
             <section class="card-soft p-4 p-md-5 mb-4">
-                <h5 class="fw-semibold mb-4">Item pesanan</h5>
+                <h5 class="mb-4" style="font-family:'Playfair Display',Georgia,serif; font-weight:500; font-size:1.35rem;">Item pesanan</h5>
                 <?php foreach ($items as $item): ?>
                     <div class="cart-row flex-column flex-sm-row align-items-sm-center" style="border-top:0;">
-                        <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/70x90/f5f5f5/000000?text=P' ?>" class="cart-thumb" style="width:70px; height:90px;" alt="<?= htmlspecialchars($item->name) ?>">
+                        <img src="<?= $item->image && $item->image !== 'default.jpg' ? base_url('uploads/products/' . $item->image) : 'https://placehold.co/70x90/f6f2ea/1a1511?text=P' ?>" class="cart-thumb" style="width:70px; height:90px;" alt="<?= htmlspecialchars($item->name) ?>">
                         <div class="flex-grow-1 mt-3 mt-sm-0">
-                            <h6 class="cart-name mb-1" style="font-size:.92rem; cursor:default;"><?= htmlspecialchars($item->name) ?></h6>
+                            <h6 class="cart-name mb-1" style="font-size:.98rem; cursor:default;"><?= htmlspecialchars($item->name) ?></h6>
                             <?php if ((!empty($item->color) && $item->color !== 'Standar') || (!empty($item->size) && $item->size !== 'Standar')): ?>
                                 <div class="cart-var">
                                     <?= trim((!empty($item->color) && $item->color !== 'Standar' ? ($item->variant_name1 ?: 'Variasi') . ': ' . htmlspecialchars($item->color) . ' · ' : '') . (!empty($item->size) && $item->size !== 'Standar' ? ($item->variant_name2 ?: 'Variasi') . ': ' . htmlspecialchars($item->size) : ''), ' ·') ?>
@@ -44,7 +44,7 @@
                             <?php endif; ?>
                             <?php if (!empty($item->custom_text) || !empty($item->custom_image)): ?>
                                 <div class="mt-2 p-3 rounded-3" style="background:var(--paper); border:1px dashed var(--line-strong);">
-                                    <span class="eyebrow" style="font-size:.62rem;"><i class="fas fa-wand-magic-sparkles me-1" style="color:var(--accent-warm);"></i> Kustom</span>
+                                    <span class="eyebrow eyebrow-plain" style="font-size:.6rem;"><i class="fas fa-wand-magic-sparkles me-1" style="color:var(--accent);"></i> Kustom</span>
                                     <?php if (!empty($item->custom_text)): ?>
                                         <div class="fst-italic cart-var">&ldquo;<?= htmlspecialchars($item->custom_text) ?>&rdquo;</div>
                                     <?php endif; ?>
@@ -70,7 +70,7 @@
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="card-soft p-4 h-100">
-                        <span class="eyebrow" style="margin-bottom:12px;">Alamat pengiriman</span>
+                        <span class="eyebrow eyebrow-plain" style="margin-bottom:14px;">Alamat pengiriman</span>
                         <div class="lh-lg" style="color:var(--muted); font-size:.88rem;">
                             <strong style="color:var(--ink);" class="d-block mb-1"><?= htmlspecialchars($order->receiver_name) ?></strong>
                             <?= nl2br(htmlspecialchars($order->address)) ?><br>
@@ -81,7 +81,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="card-soft p-4 h-100">
-                        <span class="eyebrow" style="margin-bottom:12px;">Metode pembayaran</span>
+                        <span class="eyebrow eyebrow-plain" style="margin-bottom:14px;">Metode pembayaran</span>
                         <div class="lh-lg" style="color:var(--muted); font-size:.88rem;">
                             <strong style="color:var(--ink);" class="d-block mb-1"><?= !empty($order->snap_token) || !empty($order->midtrans_order_id) ? 'Bayar Online (Midtrans)' : 'Transfer Bank (Manual)' ?></strong>
                             <?php if (empty($order->snap_token) && empty($order->midtrans_order_id)): ?>
@@ -95,9 +95,9 @@
         </div>
 
         <!-- Kanan: Aksi -->
-        <div class="col-lg-4">
+        <div class="col-lg-4" data-reveal style="--rd:.12s;">
             <div class="summary-card card-soft">
-                <h5 class="fw-semibold mb-4">Bukti pembayaran</h5>
+                <h5 class="mb-4" style="font-family:'Playfair Display',Georgia,serif; font-weight:500; font-size:1.35rem;">Bukti pembayaran</h5>
 
                 <?php if ($order->payment_proof): ?>
                     <p class="fx-hint mb-3" style="font-size:.85rem;">Bukti pembayaran Anda sudah kami terima. Tim kami akan segera memverifikasinya.</p>
@@ -120,7 +120,7 @@
                 <!-- Bayar Online via Midtrans Snap (Revisi #6) -->
                 <?php if ($order->status === 'pending'): ?>
                     <div class="mt-4 p-4 rounded-3" style="background:var(--paper); border:1px solid var(--line);">
-                        <h6 class="fw-semibold mb-2" style="font-size:.88rem;"><i class="fas fa-bolt me-2" style="color:var(--accent-warm);"></i>Bayar online</h6>
+                        <h6 class="fw-semibold mb-2" style="font-size:.88rem;"><i class="fas fa-bolt me-2" style="color:var(--accent);"></i>Bayar online</h6>
                         <p class="fx-hint mb-3">QRIS / Virtual Account / E-wallet / Kartu — via Midtrans.</p>
                         <button type="button" id="pay-button" class="btn-ink btn-block2 btn-sm2">
                             <i class="fas fa-lock"></i> Bayar sekarang
@@ -153,7 +153,7 @@
                 <?php endif; ?>
 
                 <div class="mt-4 pt-4" style="border-top:1px solid var(--line);">
-                    <span class="eyebrow" style="margin-bottom:10px;">Butuh bantuan?</span><br>
+                    <span class="eyebrow eyebrow-plain" style="margin-bottom:10px;">Butuh bantuan?</span><br>
                     <a href="#" class="btn-text2 btn-sm2 ps-0"><i class="fab fa-whatsapp"></i> Chat dengan admin</a>
                 </div>
             </div>
@@ -162,15 +162,15 @@
 
     <!-- Timeline Tracking Pesanan (Revisi #5) -->
     <?php if (!empty($tracking)): ?>
-    <div class="row pb-5">
+    <div class="row pb-sect">
         <div class="col-lg-8 mx-auto">
             <div class="sec-head">
-                <div>
-                    <span class="eyebrow">Perjalanan paket</span>
-                    <h2 class="mt-2">Lacak pesanan</h2>
+                <div data-reveal>
+                    <span class="sec-num">Perjalanan paket</span>
+                    <h2>Lacak pesanan</h2>
                 </div>
             </div>
-            <div class="card-soft p-4 p-md-5 mb-4">
+            <div class="card-soft p-4 p-md-5 mb-4" data-reveal>
                 <div class="tl">
                     <?php foreach ($tracking as $i => $t): ?>
                         <?php

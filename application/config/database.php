@@ -6,7 +6,8 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	     => '',
-	'hostname'   => 'localhost',
+	'hostname'   => '127.0.0.1',
+	'port'       => 8889,
 	'username'   => 'root',
 	'password'   => 'root',
 	'database'   => 'ecommerce_db',

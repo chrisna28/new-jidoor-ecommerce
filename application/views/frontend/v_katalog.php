@@ -2,22 +2,22 @@
 <div class="container">
     <!-- Header -->
     <div class="page-head">
-        <nav class="crumb2" aria-label="breadcrumb">
+        <nav class="crumb2" aria-label="breadcrumb" data-reveal>
             <a href="<?= base_url() ?>">Beranda</a>
             <span class="sep">/</span>
             <strong>Katalog</strong>
         </nav>
-        <h1 class="page-title">
-            <?= $is_search ? 'Hasil untuk “' . htmlspecialchars($keyword) . '”' : (isset($active_slug) ? htmlspecialchars(ucwords(str_replace('-', ' ', $active_slug))) : 'Semua koleksi') ?>
+        <h1 class="page-title" data-reveal style="--rd:.08s;">
+            <?= $is_search ? 'Hasil untuk &ldquo;' . htmlspecialchars($keyword) . '&rdquo;' : (isset($active_slug) ? htmlspecialchars(ucwords(str_replace('-', ' ', $active_slug))) : 'Semua koleksi') ?>
         </h1>
     </div>
 
-    <div class="row g-5 pb-5">
+    <div class="row g-5 pb-sect">
         <!-- Sidebar Filter -->
         <div class="col-lg-3 d-none d-lg-block">
-            <div class="sticky-top" style="top: 104px;">
-                <span class="eyebrow" style="margin-bottom:16px;">Kategori</span>
-                <ul class="filter-list mt-3">
+            <div class="sticky-top" style="top: 116px;">
+                <span class="eyebrow">Kategori</span>
+                <ul class="filter-list mt-3 mb-0">
                     <li>
                         <a href="<?= base_url('katalog') ?>" class="<?= !isset($active_slug) ? 'active' : '' ?>">
                             <span>Semua koleksi</span>
@@ -39,12 +39,12 @@
             <?php if (!empty($products)): ?>
                 <div class="katalog-toolbar">
                     <span class="count-txt"><?= count($products) ?> produk<?= $is_search ? ' ditemukan' : '' ?></span>
-                    <a href="<?= base_url('katalog') ?>" class="sec-link" style="font-size:.78rem;">Atur ulang <i class="fas fa-rotate-left" style="font-size:.7rem;"></i></a>
+                    <a href="<?= base_url('katalog') ?>" class="sec-link" style="font-size:.7rem;">Atur ulang <i class="fas fa-rotate-left" style="font-size:.66rem;"></i></a>
                 </div>
 
                 <div class="row g-4">
                     <?php foreach ($products as $p): ?>
-                        <div class="col-6 col-md-4 col-lg-3">
+                        <div class="col-6 col-lg-4">
                             <?php
                                 $origin = isset($rec_origins[$p->id]) ? $rec_origins[$p->id] : null;
                                 $this->load->view('frontend/components/product_card', [
