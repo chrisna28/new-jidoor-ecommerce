@@ -309,7 +309,7 @@
 <script>
     // Tracking View Produk (AI Implicit Signal)
     document.addEventListener('DOMContentLoaded', function() {
-        fetch('http://127.0.0.1:8000/track/view', {
+        fetch('<?= PY_API_BASE_URL ?>/track/view', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

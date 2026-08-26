@@ -27,7 +27,7 @@ JiDoor adalah platform e-commerce lengkap (toko pintu & aksesoris) yang dibangun
 ```
 new-jidoor-ecommerce/
 ├── application/
-│   ├── config/            ← routes.php, database.php (TCP 127.0.0.1:8889), midtrans.php, .env loader di index.php
+│   ├── config/            ← routes.php, database.php (baca .env), midtrans.php, api.php, .env loader di index.php
 │   ├── controllers/       ← Welcome (storefront), Auth, Cart, Order, Payment (webhook), Chat, Admin
 │   ├── models/            ← M_user, M_product, M_cart, M_order, M_rating, M_chat
 │   └── views/frontend/    ← v_header, v_footer, v_home, v_katalog, v_detail, v_cart,
@@ -47,9 +47,11 @@ new-jidoor-ecommerce/
 
 ## ✅ Persyaratan
 
-- **MAMP/XAMPP** — Apache (port 8888) + MySQL 8 (port 8889), PHP ≥ 8.1
+- **MAMP** (macOS) atau **XAMPP** (Windows) — Apache + MySQL 8, PHP ≥ 8.1
 - **Composer** (`composer install` untuk `vendor/`)
-- **Python 3.10+** dengan pip (untuk mesin rekomendasi)
+- **Python 3.10+** dengan pip (opsional — mesin rekomendasi)
+
+> **Port MySQL berbeda antar server:** MAMP memakai `8889`, XAMPP memakai `3306`. Konfigurasi koneksi kini dibaca dari `.env` (bukan hardcode), jadi cukup sesuaikan `DB_PORT`/`DB_PASSWORD` di `.env` atau lewat halaman admin **Pengaturan**.
 
 ---
 
@@ -64,7 +66,7 @@ new-jidoor-ecommerce/
 
 > `ecommerce_db.sql` sudah **self-contained** — memuat seluruh skema final (varian, tracking, chat, Midtrans, dll.) + seed data. File `db_migration_revisi.sql` hanya untuk **upgrade database lama** (pra-revisi), bukan untuk instalasi baru.
 
-> Aplikasi terhubung via **TCP `127.0.0.1:8889`** (bukan socket) — lihat `application/config/database.php`. Ini menghindari error *socket hilang* pada macOS.
+> Aplikasi terhubung via **TCP** (bukan socket) — kredensial dibaca dari `.env` (lihat `application/config/database.php`). Ini menghindari error *socket hilang* pada macOS.
 
 ### 2. Environment (.env)
 
@@ -73,10 +75,12 @@ Salin `.env.example` menjadi `.env`, lalu isi:
 ```ini
 CI_ENVIRONMENT        = development
 
+# MAMP  (macOS) : DB_PORT=8889, DB_PASSWORD=root
+# XAMPP (Windows): DB_PORT=3306, DB_PASSWORD= (kosong)
 DB_HOST               = 127.0.0.1
-DB_PORT               = 8889
+DB_PORT               = 3306
 DB_USER               = root
-DB_PASSWORD           = root
+DB_PASSWORD           =
 DB_NAME               = ecommerce_db
 
 PY_API_BASE_URL       = http://127.0.0.1:8000
@@ -88,6 +92,8 @@ MIDTRANS_IS_PRODUCTION= false
 
 Kunci sandbox didapat dari **dashboard.sandbox.midtrans.com → Settings → Access Keys**.
 File `application/config/midtrans.php` akan menampilkan error jelas jika `.env` belum berisi kunci.
+
+> 💡 Nilai `.env` juga bisa diubah langsung dari browser lewat **Admin → Pengaturan** (lihat seksi di bawah), tanpa perlu edit file.
 
 ### 3. Dependensi PHP
 
@@ -134,6 +140,42 @@ Loader **idempotent** (hapus lalu isi ulang): 10 user dummy (id 200–209) denga
 | --- | --- | --- | --- |
 | Admin | `admin` | `admin123` | Panel `/admin` — segera ganti setelah instalasi |
 | User | — | — | Daftar melalui halaman **Register** |
+
+---
+
+## ⚙️ Pengaturan via Admin Panel
+
+Tidak perlu edit file `.env` manual — konfigurasi bisa diubah langsung dari browser:
+
+1. Login admin → menu **Pengaturan** (`/admin/pengaturan`).
+2. Ubah **Database** (host/port/user/password/nama), **Midtrans** (server/client key + mode produksi), dan **API Rekomendasi** (base URL).
+3. Klik **Simpan**.
+
+Perilaku:
+- Sebelum disimpan, **koneksi database diuji** dengan nilai baru — salah port/password tidak akan mengunci situs.
+- File `.env` ditulis atomik (temp + rename) dan otomatis di-**backup ke `.env.bak`**.
+- Perubahan berlaku pada **permintaan berikutnya** (karena `.env` dibaca saat bootstrap), tanpa restart server.
+
+Kode yang mendukung: `application/libraries/Env.php` (baca/tulis `.env`), `application/config/constants.php` (`PY_API_BASE_URL`), `database.php` membaca `getenv('DB_*')` dengan fallback MAMP.
+
+---
+
+## 🪟 Deploy di Windows (XAMPP)
+
+1. **Install Composer** — unduh `Composer-Setup.exe` dari getcomposer.org.
+2. Buka terminal di `C:\xampp\htdocs\new-jidoor-ecommerce`, jalankan:
+   ```bat
+   composer install
+   ```
+3. Salin `.env.example` → `.env`, set `DB_PORT=3306`, `DB_PASSWORD=` (kosong), isi Midtrans.
+   (Atau langsung lewat **Admin → Pengaturan** setelah login.)
+4. Import `ecommerce_db.sql` via phpMyAdmin (`http://localhost/phpmyadmin`).
+5. Buka `http://localhost/new-jidoor-ecommerce/`.
+
+Catatan XAMPP:
+- **Mesin rekomendasi (FastAPI)** tidak berjalan native di Windows — halaman tetap tampil, seksi rekomendasi otomatis nonaktif (degrade graceful).
+- **Chat realtime**: `C:\xampp\php\php.exe chat-server.php` (pakai path penuh bila `php` belum terdaftar di PATH).
+- MySQL XAMPP default: user `root`, password **kosong**, port `3306`.
 
 ---
 
@@ -255,7 +297,7 @@ Model CF memantau signature tabel (`ratings`, `orders`, `order_items`, `order_tr
 
 | Masalah | Solusi |
 | --- | --- |
-| "Database Error" / socket MySQL hilang | Pastikan MySQL jalan di **port 8889**; aplikasi sudah dikonfigurasi TCP `127.0.0.1:8889`, bukan socket |
+| "Database Error" / socket MySQL hilang | Pastikan MySQL jalan di port yang benar — **MAMP `8889`**, **XAMPP `3306`** — lalu sesuaikan `DB_PORT` di `.env` atau lewat **Admin → Pengaturan** |
 | "Konfigurasi Pembayaran Belum Lengkap" | Isi `MIDTRANS_SERVER_KEY` & `MIDTRANS_CLIENT_KEY` di `.env` |
 | Status pesanan tidak berubah setelah bayar | Pastikan redirect `midtrans-finish` terjadi (popup onSuccess); cek `midtrans_order_id` di tabel `orders`; webhook hanya untuk server publik |
 | Rekomendasi kosong | Jalankan `uvicorn main:app` (port 8000) dan pastikan `PY_API_BASE_URL` benar |

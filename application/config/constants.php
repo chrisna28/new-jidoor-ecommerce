@@ -83,3 +83,10 @@ defined('EXIT_USER_INPUT')     OR define('EXIT_USER_INPUT', 7); // invalid user 
 defined('EXIT_DATABASE')       OR define('EXIT_DATABASE', 8); // database error
 defined('EXIT__AUTO_MIN')      OR define('EXIT__AUTO_MIN', 9); // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest automatically-assigned error code
+
+/*
+ * Base URL mesin rekomendasi (FastAPI).
+ * Dibaca dari .env (getenv) dengan fallback default lokal. Nilai dapat
+ * diubah lewat halaman admin "Pengaturan" (menulis ulang .env).
+ */
+defined('PY_API_BASE_URL') OR define('PY_API_BASE_URL', rtrim(getenv('PY_API_BASE_URL') ?: 'http://127.0.0.1:8000', '/'));

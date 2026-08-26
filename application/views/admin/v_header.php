@@ -39,6 +39,7 @@ $page_title = isset($title) ? $title : 'Dashboard';
         <a href="<?= site_url('admin/ratings') ?>" class="nav-item-admin <?= (strpos(current_url(), 'ratings') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-star"></i> Ulasan</a>
         <a href="<?= site_url('admin/users') ?>" class="nav-item-admin <?= (strpos(current_url(), 'users') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-users"></i> Pengguna</a>
         <a href="<?= site_url('admin/rekomendasi') ?>" class="nav-item-admin <?= (strpos(current_url(), 'rekomendasi') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-wand-magic-sparkles"></i> Rekomendasi AI</a>
+        <a href="<?= site_url('admin/pengaturan') ?>" class="nav-item-admin <?= (strpos(current_url(), 'pengaturan') !== FALSE) ? 'active' : '' ?>"><i class="fa-solid fa-gear"></i> Pengaturan</a>
     </nav>
     <div class="sidebar-logout-wrapper">
         <a href="#" onclick="document.getElementById('logoutForm').submit(); return false;" class="nav-item-admin"><i class="fa-solid fa-right-from-bracket"></i> Keluar</a>

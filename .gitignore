@@ -15,7 +15,8 @@ application/logs/*
 
 !application/*/.htaccess
 
-composer.lock
+# composer.lock DI-commit agar `composer install` di perangkat client
+# reproducible (versi dependensi terkunci, mencegah drift Midtrans/Ratchet).
 tests/mocks/database/ci_test.sqlite
 
 user_guide_src/build/*

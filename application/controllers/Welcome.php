@@ -58,7 +58,7 @@ class Welcome extends CI_Controller {
     // Helper: panggil Python API via cURL
     // -------------------------------------------------------
     private function _get_recommendations($user_id, $limit = 4, $type = 'hybrid', $with_metadata = false, $with_variants = false) {
-        $api_url = 'http://127.0.0.1:8000/recommend/' . (int)$user_id . '?top_n=' . (int)$limit;
+        $api_url = PY_API_BASE_URL . '/recommend/' . (int)$user_id . '?top_n=' . (int)$limit;
         if ($with_metadata) $api_url .= '&metadata=true';
         if ($with_variants) $api_url .= '&with_variants=true';
 
@@ -83,7 +83,7 @@ class Welcome extends CI_Controller {
         if (!$user_id) return NULL;
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'http://127.0.0.1:8000/recommend/variant/' . (int)$user_id . '/' . (int)$product_id);
+        curl_setopt($ch, CURLOPT_URL, PY_API_BASE_URL . '/recommend/variant/' . (int)$user_id . '/' . (int)$product_id);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($ch, CURLOPT_TIMEOUT, 3);
         $response = curl_exec($ch);
@@ -94,7 +94,7 @@ class Welcome extends CI_Controller {
         return isset($result['variant']) && !empty($result['variant']) ? $result['variant'] : NULL;
     }
 
-    private function _get_sectioned_recommendations($user_id, $limit_per_section = 8) {        $api_url = 'http://127.0.0.1:8000/recommend/sections/' . (int)$user_id . '?limit_per_section=' . (int)$limit_per_section . '&with_variants=true';
+    private function _get_sectioned_recommendations($user_id, $limit_per_section = 8) {        $api_url = PY_API_BASE_URL . '/recommend/sections/' . (int)$user_id . '?limit_per_section=' . (int)$limit_per_section . '&with_variants=true';
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -504,7 +504,7 @@ class Welcome extends CI_Controller {
      * Call Python API for similar items (Item-Based CF)
      */
     private function _get_similar_items($product_id) {
-        $url = "http://127.0.0.1:8000/recommend/item/" . $product_id;
+        $url = PY_API_BASE_URL . "/recommend/item/" . $product_id;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

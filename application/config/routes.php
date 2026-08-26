@@ -83,3 +83,6 @@ $route['admin/ratings']                  = 'admin/ratings';
 $route['admin/ratings/hapus/(:num)']      = 'admin/rating_hapus/$1';
 $route['admin/chat']                     = 'admin/chat';
 $route['admin/chat/(:num)']              = 'admin/chat_thread/$1';
+$route['admin/rekomendasi']              = 'admin/rekomendasi';
+$route['admin/pengaturan']               = 'admin/pengaturan';
+$route['admin/pengaturan/simpan']        = 'admin/pengaturan_simpan';

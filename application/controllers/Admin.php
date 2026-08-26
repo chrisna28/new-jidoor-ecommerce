@@ -548,8 +548,78 @@ class Admin extends CI_Controller {
         $this->load->view('admin/v_footer', $data);
     }
 
+    // -------------------------------------------------------
+    // PENGATURAN — edit .env dari browser (tanpa kirim file)
+    // -------------------------------------------------------
+    public function pengaturan() {
+        $this->load->library('env');
+
+        $data = [
+            'title'        => 'Pengaturan — JiDoor Store',
+            'active_tab'   => 'pengaturan',
+            'env'          => $this->env->read(),
+            'env_path'     => $this->env->path(),
+            'env_writable' => $this->env->is_writable(),
+        ];
+        $this->load->view('admin/v_header', $data);
+        $this->load->view('admin/v_pengaturan', $data);
+        $this->load->view('admin/v_footer', $data);
+    }
+
+    public function pengaturan_simpan() {
+        $this->load->library('env');
+
+        $db_host     = trim((string)$this->input->post('db_host'));
+        $db_port     = trim((string)$this->input->post('db_port'));
+        $db_user     = trim((string)$this->input->post('db_user'));
+        $db_password = (string)$this->input->post('db_password');
+        $db_name     = trim((string)$this->input->post('db_name'));
+        $mid_server  = trim((string)$this->input->post('midtrans_server_key'));
+        $mid_client  = trim((string)$this->input->post('midtrans_client_key'));
+        $mid_prod    = $this->input->post('midtrans_production') ? 'true' : 'false';
+        $api_base    = trim((string)$this->input->post('api_base_url'));
+
+        if ($db_host === '' || $db_port === '' || $db_user === '' || $db_name === '') {
+            $this->session->set_flashdata('error', 'Host, port, user, dan nama database wajib diisi.');
+            redirect('admin/pengaturan');
+            return;
+        }
+
+        // Tes koneksi DB dengan nilai baru — antisipasi lockout (salah port/password)
+        $test = @mysqli_connect($db_host, $db_user, $db_password, $db_name, (int)$db_port);
+        if (!$test) {
+            $this->session->set_flashdata('error', 'Koneksi database GAGAL dengan nilai tersebut — perubahan dibatalkan. Periksa host/port/user/password/nama DB.');
+            redirect('admin/pengaturan');
+            return;
+        }
+        mysqli_close($test);
+
+        if ($api_base === '') {
+            $api_base = 'http://127.0.0.1:8000';
+        }
+
+        $updates = [
+            'DB_HOST'                => $db_host,
+            'DB_PORT'                => $db_port,
+            'DB_USER'                => $db_user,
+            'DB_PASSWORD'            => $db_password,
+            'DB_NAME'                => $db_name,
+            'MIDTRANS_SERVER_KEY'    => $mid_server,
+            'MIDTRANS_CLIENT_KEY'    => $mid_client,
+            'MIDTRANS_IS_PRODUCTION' => $mid_prod,
+            'PY_API_BASE_URL'        => $api_base,
+        ];
+
+        if ($this->env->write($updates)) {
+            $this->session->set_flashdata('success', 'Pengaturan tersimpan. Perubahan berlaku pada permintaan berikutnya.');
+        } else {
+            $this->session->set_flashdata('error', 'Gagal menulis file .env. Pastikan folder proyek dapat ditulis oleh server web.');
+        }
+        redirect('admin/pengaturan');
+    }
+
     private function _get_ai_stats() {
-        $url = "http://127.0.0.1:8000/admin/stats";
+        $url = PY_API_BASE_URL . "/admin/stats";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

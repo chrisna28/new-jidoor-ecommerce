@@ -483,7 +483,7 @@
             elapsed.textContent = ((Date.now() - t0) / 1000).toFixed(1) + 's';
         }, 100);
 
-        fetch('http://127.0.0.1:8000/cache/refresh', { method: 'POST' })
+        fetch('<?= PY_API_BASE_URL ?>/cache/refresh', { method: 'POST' })
             .then(res => res.json())
             .then(data => {
                 clearInterval(timer);
@@ -534,7 +534,7 @@
         const fmtRp = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
 
         try {
-            const res = await fetch(`http://127.0.0.1:8000/admin/rec-preview/${uid}?top_n=8`);
+            const res = await fetch(`<?= PY_API_BASE_URL ?>/admin/rec-preview/${uid}?top_n=8`);
             const data = await res.json();
 
             if (!data.items || !data.items.length) {
