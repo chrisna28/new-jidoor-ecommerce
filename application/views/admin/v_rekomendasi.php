@@ -136,7 +136,7 @@
                     <span class="kpi-tile" style="background:var(--success-bg);color:var(--success);"><i class="fas fa-signal"></i></span>
                 </div>
                 <div class="kpi-value"><?= $d->total_signals ?? 0 ?></div>
-                <div class="kpi-foot"><i class="fas fa-star-half-stroke" style="color:var(--text-3);font-size:.72rem;"></i> rating · order · like · cart · view</div>
+                <div class="kpi-foot"><i class="fas fa-table-cells" style="color:var(--text-3);font-size:.72rem;"></i> pasangan user × produk terisi</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
@@ -302,10 +302,12 @@
             <div class="admin-card h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h6 class="small fw-bold text-uppercase mb-0 ls-1 text-muted">Distribusi Sinyal (Sumber Data)</h6>
-                    <span class="badge-neutral"><?= $d->total_signals ?? 0 ?> total</span>
+                    <span class="badge-neutral"><?= $raw_total ?? 0 ?> sinyal</span>
                 </div>
+                <div class="text-muted mb-3" style="font-size: .68rem; line-height: 1.4;"><i class="fa-solid fa-circle-info me-1"></i> Setiap interaksi dihitung — satu user×produk dapat menyumbang lebih dari satu sinyal (akumulasi).</div>
                 <?php 
                 $source_dist = isset($d->source_distribution) ? (array)$d->source_distribution : [];
+                $raw_total = array_sum($source_dist) ?: 0;
                 $signal_colors = [
                     'explicit' => ['label' => 'Rating (Eksplisit)', 'color' => '#4f46e5', 'icon' => 'fa-star'],
                     'purchase' => ['label' => 'Pembelian', 'color' => '#059669', 'icon' => 'fa-shopping-bag'],
@@ -313,7 +315,7 @@
                     'cart' => ['label' => 'Keranjang', 'color' => '#0284c7', 'icon' => 'fa-cart-shopping'],
                     'view' => ['label' => 'Kunjungan Produk', 'color' => '#7c3aed', 'icon' => 'fa-eye'],
                 ];
-                $total_signals = array_sum($source_dist) ?: 1;
+                $total_signals = $raw_total ?: 1;
                 foreach ($signal_colors as $key => $info):
                     $count = $source_dist[$key] ?? 0;
                     $pct = round(($count / $total_signals) * 100, 1);

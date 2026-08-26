@@ -37,8 +37,8 @@ new-jidoor-ecommerce/
 ├── python_api/            ← recommendation_engine.py, main.py (FastAPI), search_integration.py
 ├── sql/load_dummy.py      ← Loader data dummy idempotent (15 user, 3 klaster preferensi)
 ├── chat-server.php        ← Daemon WebSocket Ratchet (ws://localhost:8080/chat)
-├── ecommerce_db.sql       ← Skema + seed database
-├── db_migration_revisi.sql← Migrasi tambahan (varian, tracking, snap token, chat, dll.)
+├── ecommerce_db.sql       ← Skema final + seed (self-contained, sudah termasuk semua revisi)
+├── db_migration_revisi.sql← Migrasi legacy (hanya utk upgrade database lama pra-revisi)
 ├── .env                   ← Kredensial lokal (JANGAN di-commit; lihat .env.example)
 └── vendor/                ← midtrans/midtrans-php, cboden/ratchet (Composer)
 ```
@@ -60,8 +60,9 @@ new-jidoor-ecommerce/
 ```bash
 /Applications/MAMP/Library/bin/mysql80/bin/mysql -h127.0.0.1 -P8889 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ecommerce_db"
 /Applications/MAMP/Library/bin/mysql80/bin/mysql -h127.0.0.1 -P8889 -uroot -proot ecommerce_db < ecommerce_db.sql
-/Applications/MAMP/Library/bin/mysql80/bin/mysql -h127.0.0.1 -P8889 -uroot -proot ecommerce_db < db_migration_revisi.sql
 ```
+
+> `ecommerce_db.sql` sudah **self-contained** — memuat seluruh skema final (varian, tracking, chat, Midtrans, dll.) + seed data. File `db_migration_revisi.sql` hanya untuk **upgrade database lama** (pra-revisi), bukan untuk instalasi baru.
 
 > Aplikasi terhubung via **TCP `127.0.0.1:8889`** (bukan socket) — lihat `application/config/database.php`. Ini menghindari error *socket hilang* pada macOS.
 
@@ -225,7 +226,7 @@ Mesin CF murni (tanpa content-based) mengikuti formula kanonik literatur (v5.5):
 
 **Evaluasi model:** ranking metrics standar top-N implisit — **Precision@K, Recall@K, NDCG@K** (leave-last-out per user, remove seen, K=5); MAE/RMSE hanya dihitung bila sampel uji ≥ 10. Metrik tampil di dashboard admin (kartu "Kualitas Model").
 
-**Sinyal interaksi:** purchase 5.0 · explicit rating 1–5 · wishlist 2.5 · cart 2.0 · view 1.5 maks 3× per user×item (× faktor decay waktu). Pembelian dihitung dari pesanan berstatus `paid`/`shipped`/`delivered`.
+**Sinyal interaksi:** purchase 5.0 · explicit rating 1–5 · like 2.5 · cart 2.0 · view 1.5 maks 3× per user×item (× faktor decay waktu). Pembelian dihitung dari pesanan berstatus `paid`/`shipped`/`delivered`. Sinyal **diakumulasi** per user×item — sinyal terkuat menjadi base afinitas dan tiap jenis sinyal tambahan (rating/like/cart/view/purchase) menambah bonus konfirmasi +0.3 — sehingga like/cart/view benar-benar ikut dihitung, bukan dibuang oleh dedup.
 
 **Lapisan varian (`variant_recommender.py`):** setiap rekomendasi produk dilengkapi saran varian terbaik — warna + ukuran — dipilih dari profil preferensi personal (riwayat pembelian bobot 3, keranjang bobot 2), popularitas global varian, dan ketersediaan stok; fallback ke varian populer untuk user baru. Chip varian tampil pada kartu produk (beranda, katalog, detail).
 
@@ -268,7 +269,7 @@ Model CF memantau signature tabel (`ratings`, `orders`, `order_items`, `order_tr
 - **Storefront redesign "Editorial Luxe" v3.1** — seluruh halaman frontend & auth ditata ulang; semua kontrak data/JS dipertahankan.
 - **Lupa password disederhanakan** — reset langsung via email terdaftar (kode token/email SMTP & `M_password_reset` dihapus).
 - **Verifikasi pembayaran dua jalur** — finish-redirect (lokal) + webhook (produksi), keduanya idempotent.
-- **Engine CF v5.5** — formula KNN-CF kanonik (mean-centered weighted average + denominasi), significance shrinkage `n/(n+λ)` menggantikan co-occurrence penalty, normalisasi per-model terpisah, cap view 3×/user×item, buang sinyal guest `user_id=0`, evaluasi ranking P@K/R@K/NDCG@K di dashboard; section rekomendasi deterministik & terurut relevansi (tanpa shuffle); v5.4: fix status pembelian (`delivered`), signature cache memantau `order_items`/`order_tracking` (recompute otomatis), auto-tuning skala data; lapisan varian: rekomendasi warna + ukuran personal per kartu produk.
+- **Engine CF v5.5** — formula KNN-CF kanonik (mean-centered weighted average + denominasi), significance shrinkage `n/(n+λ)` menggantikan co-occurrence penalty, normalisasi per-model terpisah, cap view 3×/user×item, buang sinyal guest `user_id=0`, evaluasi ranking P@K/R@K/NDCG@K di dashboard; **akumulasi multi-sinyal** (like/cart/view ikut dihitung, bukan dibuang dedup) + distribusi sinyal mentah di dashboard; section rekomendasi deterministik & terurut relevansi (tanpa shuffle); v5.4: fix status pembelian (`delivered`), signature cache memantau `order_items`/`order_tracking` (recompute otomatis), auto-tuning skala data; lapisan varian: rekomendasi warna + ukuran personal per kartu produk.
 
 ---
 

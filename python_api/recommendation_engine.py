@@ -100,8 +100,9 @@ class RecommendationEngine:
         - Cart → Minat aktif (2.0)
         - Like → Minat pasif (2.5)
         - Product Views → Sinyal lemah (1.5)
-        
-        Menerapkan 'Time Decay' agar data lama memiliki pengaruh lebih kecil.
+
+        Menerapkan 'Time Decay' lalu MENGAKUMULASIKAN semua sinyal per user×item
+        (bukan dedup prioritas tertinggi), sehingga setiap jenis sinyal dihitung.
         """
         current_sig = self.get_db_signature()
         if not force and self.cache["ratings"] is not None and current_sig == self.cache["signature"]:
@@ -159,15 +160,38 @@ class RecommendationEngine:
             df['factor'] = df['days_old'].apply(get_decay_factor)
             df['rating'] = df['rating'] * df['factor']
 
-            # Prioritas: Explicit > Purchase > Like > Cart > View
+            # ============================================================
+            # AKUMULASI MULTI-SINYAL (v5.5)
+            # Sebelumnya dedup "prioritas tertinggi" membuang like/cart/view
+            # saat tumpang tindih dengan rating/purchase → like tampak 0.
+            # Sekarang: sinyal TERKUAT menjadi base afinitas, dan tiap jenis
+            # sinyal TAMBAHAN menambah bonus konfirmasi (+0.3). Ini
+            # mempertahankan skala rating 1-5 (purchase 5.0, like 2.5, dst.)
+            # tanpa over-saturasi akibat penjumlahan murni.
+            # ============================================================
+
+            # Distribusi sumber MENTAH (untuk dashboard — sebelum agregasi)
+            self.cache["raw_source_dist"] = df["source"].value_counts().to_dict()
+
             source_rank = {'explicit': 4, 'purchase': 3, 'like': 2, 'cart': 1, 'view': 0}
             df['rank'] = df['source'].map(source_rank)
-            df = df.sort_values(['user_id', 'product_id', 'rank'], ascending=False)
-            df = df.drop_duplicates(['user_id', 'product_id'])
-            
-            # Clip rating ke range 0.5 - 5.0
-            df['rating'] = df['rating'].clip(0.5, 5.0)
-            
+
+            # Base = rating sinyal terkuat per user×item (rank tertinggi)
+            base = (
+                df.sort_values('rank', ascending=False)
+                  .drop_duplicates(['user_id', 'product_id'])
+                  [['user_id', 'product_id', 'rating', 'source']]
+                  .set_index(['user_id', 'product_id'])
+            )
+            # Jumlah jenis sinyal berbeda + tanggal terbaru per user×item
+            n_src = df.groupby(['user_id', 'product_id'])['source'].nunique().rename('n_src')
+            latest = df.groupby(['user_id', 'product_id'])['created_at'].max()
+
+            agg = base.join(n_src).join(latest)
+            agg['rating'] = (agg['rating'] + 0.3 * (agg['n_src'] - 1)).clip(0.5, 5.0)
+            agg = agg.reset_index()[['user_id', 'product_id', 'rating', 'source', 'created_at']]
+            df = agg
+
             self.cache["ratings"] = df
             self.cache["signature"] = current_sig
             self.cache["timestamp"] = time.time()
@@ -1532,8 +1556,9 @@ class RecommendationEngine:
         else:
             coverage = 0
         
-        # Source Distribution
-        source_dist = df["source"].value_counts().to_dict()
+        # Source Distribution — pakai hitungan MENTAH (sebelum agregasi) agar
+        # like/cart/view yang tumpang tindih dengan rating/purchase tetap terlihat.
+        source_dist = self.cache.get("raw_source_dist") or df["source"].value_counts().to_dict()
         
         # Confidence Formula
         density_score = min(density, 50)
