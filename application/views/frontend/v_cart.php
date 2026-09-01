@@ -21,6 +21,11 @@
                                     <?= trim((!empty($item->color) && $item->color !== 'Standar' ? ($item->variant_name1 ?: 'Variasi') . ': ' . htmlspecialchars($item->color) . ' · ' : '') . (!empty($item->size) && $item->size !== 'Standar' ? ($item->variant_name2 ?: 'Variasi') . ': ' . htmlspecialchars($item->size) : ''), ' ·') ?>
                                 </div>
                             <?php endif; ?>
+                            <?php if (!empty($item->sleeve) || !empty($item->material)): ?>
+                                <div class="cart-var">
+                                    <?= trim((!empty($item->sleeve) ? 'Lengan: ' . htmlspecialchars($item->sleeve) . ' · ' : '') . (!empty($item->material) ? 'Bahan: ' . htmlspecialchars($item->material) : ''), ' ·') ?>
+                                </div>
+                            <?php endif; ?>
                             <?php if (!empty($item->note)): ?>
                                 <div class="cart-var fst-italic"><i class="fas fa-pen-nib me-1"></i><?= htmlspecialchars($item->note) ?></div>
                             <?php endif; ?>

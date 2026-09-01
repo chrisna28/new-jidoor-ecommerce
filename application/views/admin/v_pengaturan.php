@@ -95,3 +95,100 @@
         <a href="<?= base_url('admin') ?>" class="btn btn-admin-outline">Batal</a>
     </div>
 </form>
+
+<!-- ===== Jenis Lengan (Produk Custom) ===== -->
+<div class="admin-card mb-4">
+    <h5 class="fw-bold mb-1"><i class="fa-solid fa-shirt me-2" style="color:var(--accent);"></i>Jenis Lengan (Produk Custom)</h5>
+    <p class="text-muted small mb-4">Pilihan lengan dengan selisih harga dari harga dasar. Berlaku untuk produk yang dicentang "Produk bisa custom".</p>
+
+    <form action="<?= base_url('admin/pengaturan/lengan/simpan') ?>" method="post" class="d-flex flex-wrap gap-2 align-items-end mb-3">
+        <?= csrf_field() ?>
+        <input type="hidden" name="id" value="0">
+        <div style="min-width:180px;">
+            <label class="small text-uppercase ls-1 d-block mb-2">Nama Lengan</label>
+            <input type="text" name="name" class="form-control-admin" placeholder="mis. Lengan Pendek" required>
+        </div>
+        <div style="min-width:140px;">
+            <label class="small text-uppercase ls-1 d-block mb-2">Selisih Harga (Rp)</label>
+            <input type="number" name="price_delta" class="form-control-admin" value="0" step="1" min="0">
+        </div>
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" name="is_active" value="1" id="sleeveActiveNew" checked>
+            <label class="form-check-label small" for="sleeveActiveNew">Aktif</label>
+        </div>
+        <button type="submit" class="btn btn-admin-primary"><i class="fa-solid fa-plus me-1"></i>Tambah</button>
+    </form>
+
+    <?php foreach ($sleeves as $sl): ?>
+    <div class="d-flex flex-wrap gap-2 align-items-end py-3" style="border-top:1px solid var(--line);">
+        <form action="<?= base_url('admin/pengaturan/lengan/simpan') ?>" method="post" class="d-flex flex-wrap gap-2 align-items-end flex-grow-1">
+            <?= csrf_field() ?>
+            <input type="hidden" name="id" value="<?= $sl->id ?>">
+            <div style="min-width:180px;">
+                <input type="text" name="name" class="form-control-admin" value="<?= htmlspecialchars($sl->name) ?>" required>
+            </div>
+            <div style="min-width:140px;">
+                <input type="number" name="price_delta" class="form-control-admin" value="<?= (float)$sl->price_delta ?>" step="1" min="0">
+            </div>
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" name="is_active" value="1" id="sleeveActive<?= $sl->id ?>" <?= $sl->is_active ? 'checked' : '' ?>>
+                <label class="form-check-label small" for="sleeveActive<?= $sl->id ?>">Aktif</label>
+            </div>
+            <button type="submit" class="btn btn-sm btn-admin-outline"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button>
+        </form>
+        <a href="<?= base_url('admin/pengaturan/lengan/hapus/'.$sl->id) ?>" class="btn btn-sm btn-admin-outline text-danger" onclick="return confirm('Hapus jenis lengan ini?');"><i class="fa-solid fa-trash"></i></a>
+    </div>
+    <?php endforeach; ?>
+</div>
+
+<!-- ===== Bahan Kustom ===== -->
+<div class="admin-card mb-4">
+    <h5 class="fw-bold mb-1"><i class="fa-solid fa-layer-group me-2" style="color:var(--accent);"></i>Bahan Kustom</h5>
+    <p class="text-muted small mb-4">Bahan dengan harga kain &amp; harga sablon masing-masing. Total harga produk custom = harga dasar + varian + lengan + harga kain + harga sablon.</p>
+
+    <form action="<?= base_url('admin/pengaturan/bahan/simpan') ?>" method="post" class="d-flex flex-wrap gap-2 align-items-end mb-3">
+        <?= csrf_field() ?>
+        <input type="hidden" name="id" value="0">
+        <div style="min-width:200px;">
+            <label class="small text-uppercase ls-1 d-block mb-2">Nama Bahan</label>
+            <input type="text" name="name" class="form-control-admin" placeholder="mis. Cotton Combed 30s" required>
+        </div>
+        <div style="min-width:130px;">
+            <label class="small text-uppercase ls-1 d-block mb-2">Harga Kain (Rp)</label>
+            <input type="number" name="fabric_price" class="form-control-admin" value="0" step="1" min="0">
+        </div>
+        <div style="min-width:130px;">
+            <label class="small text-uppercase ls-1 d-block mb-2">Harga Sablon (Rp)</label>
+            <input type="number" name="sablon_price" class="form-control-admin" value="0" step="1" min="0">
+        </div>
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" name="is_active" value="1" id="matActiveNew" checked>
+            <label class="form-check-label small" for="matActiveNew">Aktif</label>
+        </div>
+        <button type="submit" class="btn btn-admin-primary"><i class="fa-solid fa-plus me-1"></i>Tambah</button>
+    </form>
+
+    <?php foreach ($materials as $mt): ?>
+    <div class="d-flex flex-wrap gap-2 align-items-end py-3" style="border-top:1px solid var(--line);">
+        <form action="<?= base_url('admin/pengaturan/bahan/simpan') ?>" method="post" class="d-flex flex-wrap gap-2 align-items-end flex-grow-1">
+            <?= csrf_field() ?>
+            <input type="hidden" name="id" value="<?= $mt->id ?>">
+            <div style="min-width:200px;">
+                <input type="text" name="name" class="form-control-admin" value="<?= htmlspecialchars($mt->name) ?>" required>
+            </div>
+            <div style="min-width:130px;">
+                <input type="number" name="fabric_price" class="form-control-admin" value="<?= (float)$mt->fabric_price ?>" step="1" min="0">
+            </div>
+            <div style="min-width:130px;">
+                <input type="number" name="sablon_price" class="form-control-admin" value="<?= (float)$mt->sablon_price ?>" step="1" min="0">
+            </div>
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" name="is_active" value="1" id="matActive<?= $mt->id ?>" <?= $mt->is_active ? 'checked' : '' ?>>
+                <label class="form-check-label small" for="matActive<?= $mt->id ?>">Aktif</label>
+            </div>
+            <button type="submit" class="btn btn-sm btn-admin-outline"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button>
+        </form>
+        <a href="<?= base_url('admin/pengaturan/bahan/hapus/'.$mt->id) ?>" class="btn btn-sm btn-admin-outline text-danger" onclick="return confirm('Hapus bahan ini?');"><i class="fa-solid fa-trash"></i></a>
+    </div>
+    <?php endforeach; ?>
+</div>

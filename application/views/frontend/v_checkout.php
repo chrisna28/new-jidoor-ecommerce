@@ -130,6 +130,9 @@
                                         <?php if ((!empty($item->color) && $item->color !== 'Standar') || (!empty($item->size) && $item->size !== 'Standar')): ?>
                                             <div class="cart-var"><?= trim((!empty($item->color) && $item->color !== 'Standar' ? htmlspecialchars($item->color) . ' / ' : '') . (!empty($item->size) && $item->size !== 'Standar' ? htmlspecialchars($item->size) : ''), ' /') ?></div>
                                         <?php endif; ?>
+                                        <?php if (!empty($item->sleeve) || !empty($item->material)): ?>
+                                            <div class="cart-var"><?= trim((!empty($item->sleeve) ? htmlspecialchars($item->sleeve) . ' / ' : '') . (!empty($item->material) ? htmlspecialchars($item->material) : ''), ' /') ?></div>
+                                        <?php endif; ?>
                                         <div class="cart-var">Qty: <?= $item->qty ?></div>
                                     </div>
                                 </div>

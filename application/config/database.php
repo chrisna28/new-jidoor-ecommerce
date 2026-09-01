@@ -13,8 +13,8 @@ $db_user     = getenv('DB_USER');
 $db_password = getenv('DB_PASSWORD');
 $db_name     = getenv('DB_NAME');
 
-if ($db_host === false)     { $db_host = '127.0.0.1'; }
-if ($db_port === false)     { $db_port = 8889; }
+if ($db_host === false)     { $db_host = 'mysql'; }
+if ($db_port === false)     { $db_port = 3306; }
 if ($db_user === false)     { $db_user = 'root'; }
 if ($db_password === false) { $db_password = 'root'; } // bila .env TIDAK ada
 if ($db_name === false)     { $db_name = 'ecommerce_db'; }

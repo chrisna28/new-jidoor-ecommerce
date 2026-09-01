@@ -1,4 +1,4 @@
- <?php
+<?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
@@ -587,5 +587,81 @@ class M_product extends CI_Model {
         return array_map('intval',
             array_column($this->db->select('product_id')->get_where('likes', ['user_id' => $user_id])->result_array(), 'product_id')
         );
+    }
+
+    // =======================================================
+    // LENGAN & BAHAN KUSTOM (Revisi: pilihan lengan + bahan)
+    // =======================================================
+
+    /**
+     * Ambil daftar pilihan lengan yang aktif (untuk produk custom).
+     */
+    public function get_sleeves() {
+        return $this->db->where('is_active', 1)
+                        ->order_by('sort_order', 'ASC')
+                        ->get('custom_sleeves')->result();
+    }
+
+    /**
+     * Ambil satu pilihan lengan berdasarkan ID.
+     */
+    public function get_sleeve($id) {
+        return $this->db->get_where('custom_sleeves', ['id' => $id])->row();
+    }
+
+    /**
+     * Ambil daftar bahan kustom yang aktif.
+     */
+    public function get_materials() {
+        return $this->db->where('is_active', 1)
+                        ->order_by('sort_order', 'ASC')
+                        ->get('custom_materials')->result();
+    }
+
+    /**
+     * Ambil satu bahan kustom berdasarkan ID.
+     */
+    public function get_material($id) {
+        return $this->db->get_where('custom_materials', ['id' => $id])->row();
+    }
+
+    /**
+     * Simpan pilihan lengan (insert bila tanpa id, update bila ada id).
+     */
+    public function save_sleeve($data, $id = null) {
+        if ($id) {
+            $this->db->where('id', $id)->update('custom_sleeves', $data);
+            return $id;
+        }
+        $this->db->insert('custom_sleeves', $data);
+        return $this->db->insert_id();
+    }
+
+    /**
+     * Simpan bahan kustom (insert bila tanpa id, update bila ada id).
+     */
+    public function save_material($data, $id = null) {
+        if ($id) {
+            $this->db->where('id', $id)->update('custom_materials', $data);
+            return $id;
+        }
+        $this->db->insert('custom_materials', $data);
+        return $this->db->insert_id();
+    }
+
+    /**
+     * Hapus pilihan lengan.
+     */
+    public function delete_sleeve($id) {
+        $this->db->where('id', $id)->delete('custom_sleeves');
+        return $this->db->affected_rows() > 0;
+    }
+
+    /**
+     * Hapus bahan kustom.
+     */
+    public function delete_material($id) {
+        $this->db->where('id', $id)->delete('custom_materials');
+        return $this->db->affected_rows() > 0;
     }
 }

@@ -381,6 +381,8 @@ class Welcome extends CI_Controller {
             'title'       => $product->name . ' — JiDoor Store',
             'product'     => $product,
             'variants'    => $this->M_product->get_variants($product->id),
+            'sleeves'     => !empty($product->is_custom) ? $this->M_product->get_sleeves() : [],
+            'materials'   => !empty($product->is_custom) ? $this->M_product->get_materials() : [],
             'rec_variant' => $this->_get_variant_rec($user_id, $product->id),
             'avg_rating'  => $avg_rating,
             'user_rating' => $user_rating,

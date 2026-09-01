@@ -86,3 +86,7 @@ $route['admin/chat/(:num)']              = 'admin/chat_thread/$1';
 $route['admin/rekomendasi']              = 'admin/rekomendasi';
 $route['admin/pengaturan']               = 'admin/pengaturan';
 $route['admin/pengaturan/simpan']        = 'admin/pengaturan_simpan';
+$route['admin/pengaturan/lengan/simpan'] = 'admin/lengan_simpan';
+$route['admin/pengaturan/lengan/hapus/(:num)'] = 'admin/lengan_hapus/$1';
+$route['admin/pengaturan/bahan/simpan']  = 'admin/bahan_simpan';
+$route['admin/pengaturan/bahan/hapus/(:num)']  = 'admin/bahan_hapus/$1';

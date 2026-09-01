@@ -37,6 +37,12 @@
                                 <?php if (!empty($item->size) && $item->size !== 'Standar'): ?>
                                     <span class="badge-neutral mt-1"><?= htmlspecialchars($item->variant_name2 ?: 'Variasi') ?>: <?= htmlspecialchars($item->size) ?></span>
                                 <?php endif ?>
+                                <?php if (!empty($item->sleeve)): ?>
+                                    <span class="badge-neutral mt-1"><i class="fas fa-shirt me-1"></i>Lengan: <?= htmlspecialchars($item->sleeve) ?></span>
+                                <?php endif ?>
+                                <?php if (!empty($item->material)): ?>
+                                    <span class="badge-neutral mt-1"><i class="fas fa-layer-group me-1"></i>Bahan: <?= htmlspecialchars($item->material) ?></span>
+                                <?php endif ?>
                                 <?php if (!empty($item->note)): ?>
                                     <div class="text-muted fst-italic mt-1"><i class="fas fa-pen-nib me-1"></i><?= htmlspecialchars($item->note) ?></div>
                                 <?php endif ?>

@@ -560,10 +560,69 @@ class Admin extends CI_Controller {
             'env'          => $this->env->read(),
             'env_path'     => $this->env->path(),
             'env_writable' => $this->env->is_writable(),
+            'sleeves'      => $this->M_product->get_sleeves(),
+            'materials'    => $this->M_product->get_materials(),
         ];
         $this->load->view('admin/v_header', $data);
         $this->load->view('admin/v_pengaturan', $data);
         $this->load->view('admin/v_footer', $data);
+    }
+
+    // -------------------------------------------------------
+    // PENGATURAN — kelola pilihan lengan & bahan kustom
+    // -------------------------------------------------------
+    public function lengan_simpan() {
+        $id    = (int)$this->input->post('id');
+        $name  = trim((string)$this->input->post('name', TRUE));
+        $delta = (float)$this->input->post('price_delta');
+
+        if ($name === '') {
+            $this->session->set_flashdata('error', 'Nama jenis lengan wajib diisi.');
+            redirect('admin/pengaturan');
+        }
+
+        $data = [
+            'name'        => mb_substr($name, 0, 50),
+            'price_delta' => $delta,
+            'is_active'   => $this->input->post('is_active') ? 1 : 0,
+        ];
+        $this->M_product->save_sleeve($data, $id > 0 ? $id : null);
+        $this->session->set_flashdata('success', 'Jenis lengan tersimpan.');
+        redirect('admin/pengaturan');
+    }
+
+    public function lengan_hapus($id) {
+        $this->M_product->delete_sleeve((int)$id);
+        $this->session->set_flashdata('success', 'Jenis lengan dihapus.');
+        redirect('admin/pengaturan');
+    }
+
+    public function bahan_simpan() {
+        $id     = (int)$this->input->post('id');
+        $name   = trim((string)$this->input->post('name', TRUE));
+        $fabric = (float)$this->input->post('fabric_price');
+        $sablon = (float)$this->input->post('sablon_price');
+
+        if ($name === '') {
+            $this->session->set_flashdata('error', 'Nama bahan wajib diisi.');
+            redirect('admin/pengaturan');
+        }
+
+        $data = [
+            'name'         => mb_substr($name, 0, 100),
+            'fabric_price' => $fabric,
+            'sablon_price' => $sablon,
+            'is_active'    => $this->input->post('is_active') ? 1 : 0,
+        ];
+        $this->M_product->save_material($data, $id > 0 ? $id : null);
+        $this->session->set_flashdata('success', 'Bahan kustom tersimpan.');
+        redirect('admin/pengaturan');
+    }
+
+    public function bahan_hapus($id) {
+        $this->M_product->delete_material((int)$id);
+        $this->session->set_flashdata('success', 'Bahan kustom dihapus.');
+        redirect('admin/pengaturan');
     }
 
     public function pengaturan_simpan() {

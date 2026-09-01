@@ -62,6 +62,27 @@ class Cart extends CI_Controller {
             }
         }
 
+        // Validasi pilihan lengan & bahan untuk produk custom (Revisi lengan/bahan)
+        $sleeve_id   = (int)$this->input->post('sleeve_id');
+        $material_id = (int)$this->input->post('material_id');
+        $sleeve      = null;
+        $material    = null;
+        if (!empty($product->is_custom)) {
+            if ($sleeve_id > 0) {
+                $sleeve = $this->M_product->get_sleeve($sleeve_id);
+            }
+            if ($material_id > 0) {
+                $material = $this->M_product->get_material($material_id);
+            }
+            if (!$sleeve || !$material) {
+                $this->session->set_flashdata('error', 'Silakan pilih jenis lengan dan bahan terlebih dahulu.');
+                redirect('produk/' . $product->slug);
+            }
+        } else {
+            $sleeve_id = 0;
+            $material_id = 0;
+        }
+
         // Stok dicek per varian jika ada, jika tidak pakai stok produk
         $available_stock = $variant ? (int)$variant->stock : (int)$product->stock;
         if ($available_stock < $qty) {
@@ -69,7 +90,7 @@ class Cart extends CI_Controller {
             redirect('produk/' . $product->slug);
         }
 
-        $this->M_cart->add($user_id, $product_id, $qty, $variant_id > 0 ? $variant_id : NULL, $note, $custom_text);
+        $this->M_cart->add($user_id, $product_id, $qty, $variant_id > 0 ? $variant_id : NULL, $note, $custom_text, $sleeve_id > 0 ? $sleeve_id : NULL, $material_id > 0 ? $material_id : NULL);
         $this->session->set_flashdata('success', '"' . $product->name . '" ditambahkan ke keranjang!');
         redirect('keranjang');
     }
@@ -169,11 +190,13 @@ class Cart extends CI_Controller {
                 'variant_id'   => $item->variant_id,
                 'color'        => $item->color,
                 'size'         => $item->size,
+                'sleeve'       => !empty($item->sleeve) ? $item->sleeve : NULL,
+                'material'     => !empty($item->material) ? $item->material : NULL,
                 'note'         => $item->note,
                 'custom_image' => isset($custom_uploads[$item->id]) ? $custom_uploads[$item->id] : NULL,
                 'custom_text'  => $item->custom_text,
                 'qty'          => $item->qty,
-                'price'        => $item->price, // harga efektif (produk + delta varian)
+                'price'        => $item->price, // harga efektif (produk + varian + lengan + bahan)
             ];
             // Stok dikurangi per varian jika ada, jika tidak per produk
             if ($item->variant_id) {

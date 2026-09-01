@@ -85,6 +85,34 @@
                         <?php endif; ?>
 
                         <?php if (!empty($product->is_custom)): ?>
+                        <!-- Pilihan Lengan & Bahan (Revisi: lengan + bahan + harga sablon) -->
+                        <input type="hidden" name="sleeve_id" id="sleeveIdInput" value="">
+                        <input type="hidden" name="material_id" id="materialIdInput" value="">
+
+                        <div class="mb-3">
+                            <label class="fx-field mb-2 d-block fw-semibold" style="font-size:.82rem;">Pilih Jenis Lengan <span style="color:var(--bad);">*</span></label>
+                            <div class="d-flex flex-wrap gap-2" id="sleeveGroup">
+                                <?php foreach ($sleeves as $si => $sl): ?>
+                                    <button type="button" class="variant-btn<?= $si === 0 ? ' active' : '' ?>" data-sleeve-id="<?= (int)$sl->id ?>" data-sleeve-delta="<?= (float)$sl->price_delta ?>">
+                                        <?= htmlspecialchars($sl->name) ?>
+                                        <?php if ((float)$sl->price_delta > 0): ?><span class="vstock">+Rp <?= number_format($sl->price_delta, 0, ',', '.') ?></span><?php endif; ?>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fx-field mb-2 d-block fw-semibold" style="font-size:.82rem;">Pilih Bahan <span style="color:var(--bad);">*</span></label>
+                            <div class="d-flex flex-wrap gap-2" id="materialGroup">
+                                <?php foreach ($materials as $mi => $mt): ?>
+                                    <button type="button" class="variant-btn<?= $mi === 0 ? ' active' : '' ?>" data-material-id="<?= (int)$mt->id ?>" data-fabric="<?= (float)$mt->fabric_price ?>" data-sablon="<?= (float)$mt->sablon_price ?>">
+                                        <?= htmlspecialchars($mt->name) ?>
+                                        <span class="vstock">kain +Rp <?= number_format($mt->fabric_price, 0, ',', '.') ?> · sablon Rp <?= number_format($mt->sablon_price, 0, ',', '.') ?></span>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
                         <!-- Permintaan Custom (Revisi #4) -->
                         <div class="fx-field">
                             <label><i class="fas fa-wand-magic-sparkles me-1" style="color:var(--accent);"></i> Permintaan custom</label>
@@ -321,6 +349,23 @@
         }).catch(err => console.log('AI View Tracking Offline'));
     });
 
+// ===== State harga global (dipakai juga oleh pilihan lengan & bahan) =====
+window.__priceState = {
+    base: <?= (float)$product->price ?>,
+    variantDelta: 0,
+    sleeveDelta: 0,
+    materialExtra: 0
+};
+window.__refreshPrice = function() {
+    const el = document.getElementById('priceDisplay');
+    if (!el) return;
+    const total = window.__priceState.base
+        + window.__priceState.variantDelta
+        + window.__priceState.sleeveDelta
+        + window.__priceState.materialExtra;
+    el.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(total));
+};
+
 // ===== Logika Pemilih Variasi (ala Shopee) =====
 document.addEventListener('DOMContentLoaded', function() {
     const variants = <?= json_encode(array_map(function($v) {
@@ -418,7 +463,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyVariant(v) {
         variantInput.value = v.id;
-        priceDisplay.textContent = fmt(basePrice + v.price_delta);
+        window.__priceState.variantDelta = v.price_delta;
+        window.__refreshPrice();
         qtyInput.max = Math.max(v.stock, 1);
         if (parseInt(qtyInput.value) > v.stock) qtyInput.value = v.stock || 1;
         stockInfo.innerHTML = '<i class="fas fa-circle-check me-1" style="color:var(--ok);"></i> Stok: <strong>' + v.stock + '</strong> buah';
@@ -456,7 +502,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function resetSelection() {
         variantInput.value = '';
-        priceDisplay.textContent = fmt(basePrice);
+        window.__priceState.variantDelta = 0;
+        window.__refreshPrice();
         qtyInput.max = productStock;
         qtyInput.value = 1;
         stockInfo.innerHTML = '<i class="fas fa-circle-info me-1"></i> Stok: <strong>' + totalVariantStock + '</strong> buah tersedia';
@@ -513,6 +560,53 @@ document.addEventListener('DOMContentLoaded', function() {
             aiApplyBtn.disabled = true;
         });
     }
+});
+</script>
+
+<script>
+// ===== Pilihan Lengan & Bahan (hanya produk custom) =====
+document.addEventListener('DOMContentLoaded', function() {
+    const sleeveGroup   = document.getElementById('sleeveGroup');
+    const materialGroup = document.getElementById('materialGroup');
+    if (!sleeveGroup && !materialGroup) return;
+
+    const sleeveInput   = document.getElementById('sleeveIdInput');
+    const materialInput = document.getElementById('materialIdInput');
+
+    function selectSleeve(btn) {
+        [...sleeveGroup.children].forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        window.__priceState.sleeveDelta = parseFloat(btn.dataset.sleeveDelta || 0);
+        if (sleeveInput) sleeveInput.value = btn.dataset.sleeveId;
+        window.__refreshPrice();
+    }
+
+    function selectMaterial(btn) {
+        [...materialGroup.children].forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        window.__priceState.materialExtra =
+            parseFloat(btn.dataset.fabric || 0) + parseFloat(btn.dataset.sablon || 0);
+        if (materialInput) materialInput.value = btn.dataset.materialId;
+        window.__refreshPrice();
+    }
+
+    if (sleeveGroup) {
+        sleeveGroup.querySelectorAll('.variant-btn').forEach(btn => {
+            btn.addEventListener('click', () => selectSleeve(btn));
+        });
+        const active = sleeveGroup.querySelector('.variant-btn.active') || sleeveGroup.querySelector('.variant-btn');
+        if (active) selectSleeve(active);
+    }
+
+    if (materialGroup) {
+        materialGroup.querySelectorAll('.variant-btn').forEach(btn => {
+            btn.addEventListener('click', () => selectMaterial(btn));
+        });
+        const active = materialGroup.querySelector('.variant-btn.active') || materialGroup.querySelector('.variant-btn');
+        if (active) selectMaterial(active);
+    }
+
+    window.__refreshPrice();
 });
 </script>
 
